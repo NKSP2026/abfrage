@@ -63,7 +63,8 @@ const defaults = {
       vermisst:Q("vermisst","Werden Personen vermisst oder befinden sich möglicherweise noch Personen im Gefahrenbereich?","choice",["Ja","Nein","Unklar"],40),
       ausbreitung:Q("ausbreitung","Breitet sich Feuer oder Rauch aus?","choice",["Ja","Nein","Unklar"],50),
       gebaeude:Q("gebaeude","Handelt es sich um ein Gebäude / eine Wohnung / ein Objekt?","choice",["Ja","Nein","Unklar"],60),
-      verletzte:Q("verletzte","Gibt es verletzte oder durch Rauch betroffene Personen?","choice",["Ja","Nein","Unklar"],70)
+      verletzte:Q("verletzte","Gibt es verletzte oder durch Rauch betroffene Personen?","choice",["Ja","Nein","Unklar"],70),
+      rauchgas:Q("rauchgas","Besteht der Verdacht auf Rauchgasinhalation oder Rauchgasvergiftung?","choice",["Ja","Nein","Unklar"],80,{whenQuestion:"verletzte",whenValue:"Ja"})
     },
     abc: {
       stoff:Q("stoff","Ist ein Stoff bekannt oder auf Behältern gekennzeichnet?","text",[],10,{suggestionGroup:"gefahrstoffe"}),
@@ -109,13 +110,15 @@ const defaults = {
     wasser_bew:{category:"wasser",questionId:"bewusstsein",value:"Ja",reason:"Bewusstseinsstörung nach Wasserunfall"},
     wasser_atem:{category:"wasser",questionId:"atmung",value:"Nein",reason:"Keine normale Atmung nach Wasserunfall"},
     gift_bew:{category:"vergiftung",questionId:"bewusstsein",value:"Bewusstlos",reason:"Bewusstlosigkeit bei Vergiftung"},
-    gift_atem:{category:"vergiftung",questionId:"atmung",value:"Atemstillstand",reason:"Atemstillstand bei Vergiftung"}
+    gift_atem:{category:"vergiftung",questionId:"atmung",value:"Atemstillstand",reason:"Atemstillstand bei Vergiftung"},
+    brand_rauchgas:{category:"brand",questionId:"rauchgas",value:"Ja",reason:"Verdacht auf Rauchgasinhalation / Rauchgasvergiftung"}
   },
   resource_rules: {
     med_rtw:{category:"medizin",questionId:"hauptbeschwerde",value:"*",resources:["RTW"]},
     med_na:{category:"medizin",questionId:"bewusstsein",value:"Bewusstlos",resources:["NEF / Notarzt"]},
     brand_feuer:{category:"brand",questionId:"feuersichtbar",value:"Ja",resources:["Feuerwehr"]},
     brand_person:{category:"brand",questionId:"personen",value:"Ja",resources:["Rettungsdienst"]},
+    brand_rauchgas:{category:"brand",questionId:"rauchgas",value:"Ja",resources:["RTW","NEF / Notarzt"]},
     vu_person:{category:"vu",questionId:"personen",value:"Ja",resources:["RTW"]},
     vu_eingeklemmt:{category:"vu",questionId:"eingeklemmt",value:"Ja",resources:["Feuerwehr / technische Rettung","RTW","NEF / Notarzt – Lage und Verletzungsmuster bewerten"]},
     vu_gefahr:{category:"vu",questionId:"gefahr",value:"Gefahrstoff / unbekannter Stoff",resources:["Feuerwehr / ABC-Gefahrgut-Komponente"]},
@@ -133,7 +136,7 @@ const defaults = {
 
 let fb=null, db=null, auth=null, user=null;
 let data=structuredClone(defaults);
-let currentCategory=null, currentQuestions=[], currentIndex=0, answers={};
+let currentCategory=null, currentQuestions=[], currentIndex=0, answers={}, finished=false;
 
 function configured(){ return firebaseConfig?.apiKey && firebaseConfig?.appId && !firebaseConfig.apiKey.includes("HIER_"); }
 function isAdmin(){ return !!user && user.uid===ADMIN_UID && !ADMIN_UID.includes("HIER_"); }
@@ -157,11 +160,19 @@ async function initFirebase(){
 }
 async function loadFirebase(){
   if(!db) return;
-  for(const p of ["catalog","notarzt_rules","resource_rules","suggestions"]){ const snap=await get(ref(db,p)); if(snap.exists()) data[p]=snap.val(); }
+  // Firebase ergänzt die Grunddaten. Dadurch bleiben neue Standardregeln wie
+  // Rauchgas/NEF auch erhalten, wenn in Firebase bereits ältere Daten liegen.
+  for(const p of ["catalog","notarzt_rules","resource_rules","suggestions"]){
+    const snap=await get(ref(db,p));
+    if(!snap.exists()) continue;
+    const remote=snap.val();
+    if(p==="suggestions") data[p]={...(defaults[p]||{}),...(remote||{})};
+    else data[p]={...(defaults[p]||{}),...(remote||{})};
+  }
 }
 function questionsFor(category){ const raw=Object.values(data.catalog?.[category]||{}); if(raw.length) return raw.sort((a,b)=>(a.order||999)-(b.order||999)); return [Q("beschreibung","Bitte beschreiben Sie kurz das Ereignis.","text",[],10)]; }
 function visibleQuestions(){ return currentQuestions.filter(q=>!q.whenQuestion || answers[q.whenQuestion]===q.whenValue); }
-function start(category){ currentCategory=category; currentQuestions=questionsFor(category); currentIndex=0; answers={}; $("home").hidden=true; $("admin").hidden=true; $("call").hidden=false; $("categoryTitle").textContent=categoryName(category); renderQuestion(); evaluate(); }
+function start(category){ currentCategory=category; currentQuestions=questionsFor(category); currentIndex=0; answers={}; finished=false; $("home").hidden=true; $("admin").hidden=true; $("call").hidden=false; $("categoryTitle").textContent=categoryName(category); renderQuestion(); evaluate(); }
 
 function calculateAge(dateString){
   if(!dateString) return "";
@@ -185,14 +196,40 @@ function nextQuestion(){
   if(currentIndex<qs.length-1){ currentIndex++; renderQuestion(); }
   else finish();
 }
+
+// Auswahlfragen laufen automatisch weiter. Eine Weiter-Taste bleibt nur bei
+// Eingaben, Datum/Zahl und Vorschlagslisten sichtbar, damit dort noch bewusst
+// bestätigt werden kann.
+function answerChoice(q,value){
+  answers[q.id]=value;
+  evaluate();
+  const qs=visibleQuestions();
+  const idx=qs.findIndex(x=>x.id===q.id);
+  currentIndex=idx>=0?idx:currentIndex;
+  if(currentIndex<qs.length-1){
+    currentIndex++;
+    renderQuestion();
+  } else {
+    // Letzte Auswahl beantwortet: Abfrage endgültig abschließen.
+    finish();
+  }
+}
 function renderQuestion(){
+  if(finished){
+    $("progress").textContent="Abfrage abgeschlossen";
+    $("questionText").textContent="Auswertung abgeschlossen";
+    $("answerArea").innerHTML='<div class="item">Die Abfrage ist beendet. Die Auswertung und der kurze Einsatztext stehen unten.</div>';
+    $("previousBtn").hidden=true; $("nextBtn").hidden=true; $("finishBtn").hidden=true;
+    return;
+  }
+  $("previousBtn").hidden=false;
   const qs=visibleQuestions(); if(!qs.length){ $("questionText").textContent="Keine Fragen vorhanden."; return; }
   currentIndex=Math.max(0,Math.min(currentIndex,qs.length-1)); const q=qs[currentIndex];
   $("progress").textContent=`Frage ${currentIndex+1} von ${qs.length}`; $("questionText").textContent=q.text;
   const area=$("answerArea"); area.innerHTML="";
   if(q.type==="choice"){
     const wrap=document.createElement("div"); wrap.className="answer-options";
-    (q.options||[]).forEach(v=>{ const b=document.createElement("button"); b.type="button"; b.className="answer-option"+(answers[q.id]===v?" selected":""); b.textContent=v; b.onclick=()=>{ answers[q.id]=v; evaluate(); renderQuestion(); }; wrap.appendChild(b); }); area.appendChild(wrap);
+    (q.options||[]).forEach(v=>{ const b=document.createElement("button"); b.type="button"; b.className="answer-option"+(answers[q.id]===v?" selected":""); b.textContent=v; b.onclick=()=>answerChoice(q,v); wrap.appendChild(b); }); area.appendChild(wrap);
   }else{
     const input=document.createElement(q.type==="text"?"textarea":"input");
     if(q.type==="number") input.type="number";
@@ -213,17 +250,6 @@ function renderQuestion(){
     if(q.id==="geburtsdatum"){ if(answers.alter) ageInfo.textContent=`Automatisch berechnetes Alter: ${answers.alter} Jahre`; area.appendChild(ageInfo); }
     if(q.type==="text"&&q.suggestionGroup){ const sw=document.createElement("div"); sw.className="suggestions"; sw.id="dynamicSuggestions"; area.appendChild(sw); renderSuggestionButtons(input,q); }
   }
-  // Der große Weiter-Button wird bewusst DIREKT unter jeder Antwort angezeigt.
-  // So bleibt der nächste Schritt auch bei vielen Vorschlägen (z. B. Benzin,
-  // Gefahrstoffen, Vorerkrankungen oder Medikamenten) sofort erreichbar.
-  const inlineAction=document.createElement("button");
-  inlineAction.type="button";
-  inlineAction.className="inline-continue";
-  const isLastQuestion=currentIndex===qs.length-1;
-  inlineAction.textContent=isLastQuestion?"Auswertung abschließen":"Weiter →";
-  inlineAction.onclick=()=>{ if(isLastQuestion) finish(); else nextQuestion(); };
-  area.appendChild(inlineAction);
-
   $("previousBtn").disabled=currentIndex===0;
   const last=currentIndex===qs.length-1;
   $("nextBtn").hidden=last;
@@ -244,12 +270,80 @@ function evaluate(){ const reasons=matchedNotarztRules(); const resources=matche
 function renderSummary(){ const map=new Map(currentQuestions.map(q=>[q.id,q.text])); map.set("alter","Automatisch berechnetes Alter"); $("answerSummary").innerHTML=Object.entries(answers).length?Object.entries(answers).map(([k,v])=>`<div class="item"><strong>${esc(map.get(k)||k)}:</strong> ${esc(v)}${k==="alter"?" Jahre":""}</div>`).join(""):"Noch keine Antworten."; }
 function generateTexts(){ const {reasons,resources}=evaluate(); const qs=new Map(currentQuestions.map(q=>[q.id,q.text])); qs.set("alter","Automatisch berechnetes Alter"); const lines=Object.entries(answers).filter(([,v])=>String(v).trim()).map(([k,v])=>`${qs.get(k)||k}: ${v}`);
   const summary=`Einsatzthema: ${categoryName(currentCategory)}.\n`+lines.join("\n")+`\n\nNotarzt-/NEF-Bewertung: ${reasons.length?"Regel ausgelöst – "+reasons.join("; "):"keine hinterlegte Regel ausgelöst."}\nEinsatzmittelvorschlag: ${resources.join(", ")}.`;
-  const age=answers.alter?`${answers.alter} Jahre, `:""; const key=[];
-  if(answers.hauptbeschwerde) key.push(answers.hauptbeschwerde); if(answers.eingeklemmt==="Ja") key.push("Person eingeklemmt"); if(answers.bewusstsein) key.push(`Bewusstsein: ${answers.bewusstsein}`); if(answers.atmung) key.push(`Atmung: ${answers.atmung}`); if(answers.schwereverletzung==="Ja") key.push("Verdacht auf schwere Verletzung"); if(answers.blutung==="Ja") key.push("schwere Blutung"); if(answers.brustschmerz==="Ja") key.push("akuter Brustschmerz"); if(answers.neurologie&&answers.neurologie!=="Keine") key.push(`neurologisch: ${answers.neurologie}`); if(answers.vorerkrankungen) key.push(`Vorerkrankungen: ${answers.vorerkrankungen}`);
-  const dispatch=`${categoryName(currentCategory)} – ${age}${key.length?key.join("; "):"Lage wird weiter abgefragt"}. ${reasons.length?"Notarzt-/NEF-Regel ausgelöst: "+reasons.join("; ")+". ":"Keine hinterlegte Notarztregel ausgelöst. "}Vorschlag: ${resources.join(", ")}.`;
+  const dispatch=buildShortDispatchText(reasons, resources);
   $("finalSummary").textContent=summary; $("dispatchText").textContent=dispatch; return {summary,dispatch,reasons,resources}; }
-async function finish(){ const result=generateTexts(); if(db&&user){ try{ await push(ref(db,`call_history/${user.uid}`),{category:currentCategory,answers,notarztReasons:result.reasons,resources:result.resources,summary:result.summary,dispatchText:result.dispatch,createdAt:Date.now(),source:"web"}); setStatus("● Abfrage gespeichert"); }catch(e){ console.error(e); alert("Abfrage konnte nicht gespeichert werden: "+e.message); } } else { const h=JSON.parse(localStorage.getItem("einsatzabfrage_history")||"[]"); h.push({category:currentCategory,answers,...result,createdAt:Date.now()}); localStorage.setItem("einsatzabfrage_history",JSON.stringify(h)); }
-  $("finalSummary").scrollIntoView({behavior:"smooth",block:"start"}); }
+
+function buildShortDispatchText(reasons, resources){
+  // DME-/Einsatztext: nur die aktuelle Lage und wichtige Auffälligkeiten.
+  // Negative, normale und unklare Antworten werden bewusst weggelassen.
+  const parts=[];
+  const age=answers.alter ? `${answers.alter} J.` : "";
+  const add=v=>{ if(v && !parts.includes(v)) parts.push(String(v)); };
+  const yes=(id,label)=>answers[id]==="Ja" && add(label);
+  const critical=(id, map)=>{ const v=answers[id]; if(v && map[v]) add(map[v]); };
+
+  if(currentCategory==="medizin"){
+    if(age) add(age);
+    if(answers.hauptbeschwerde) add(answers.hauptbeschwerde);
+    critical("bewusstsein", {"Verwirrt / desorientiert":"verwirrt","Somnolent":"somnolent","Soporös":"soporös","Bewusstlos":"bewusstlos"});
+    critical("atmung", {"Dyspnoe / erschwerte Atmung":"Dyspnoe","Ausgeprägte oder zunehmende Dyspnoe":"schwere Dyspnoe","Keine normale Atmung":"keine normale Atmung","Atemstillstand":"Atemstillstand"});
+    critical("kreislauf", {"Schwindel / Kreislaufprobleme":"Kreislaufprobleme","Ausgeprägte Kreislaufinsuffizienz / Schockzeichen":"Schockzeichen","Kreislaufstillstand":"Kreislaufstillstand"});
+    yes("brustschmerz","akuter Brustschmerz"); yes("blutung","starke Blutung");
+    critical("neurologie", {"Lähmung / Kraftverlust":"neurol. Ausfall","Sprachstörung":"Sprachstörung","Gesichtslähmung":"Gesichtslähmung","Krampfanfall":"Krampfanfall","Mehrere / unklar":"neurol. Auffälligkeiten"});
+  } else if(currentCategory==="vu"){
+    add("VU");
+    if(answers.anzahl) add(`${answers.anzahl} Betroffene`);
+    yes("eingeklemmt","Person eingeklemmt"); yes("schwereverletzung","schwere Verletzung"); yes("blutung","starke Blutung"); yes("brustbauch","Thorax-/Bauchtrauma");
+    critical("bewusstsein", {"Verwirrt / desorientiert":"verwirrt","Somnolent":"somnolent","Soporös":"soporös","Bewusstlos":"bewusstlos"});
+    critical("atmung", {"Dyspnoe / erschwerte Atmung":"Dyspnoe","Ausgeprägte oder zunehmende Dyspnoe":"schwere Dyspnoe","Keine normale Atmung":"keine normale Atmung","Atemstillstand":"Atemstillstand"});
+    if(answers.fahrzeuglage && !["Normal stehend","Unklar"].includes(answers.fahrzeuglage)) add(`Fzg. ${answers.fahrzeuglage.toLowerCase()}`);
+    if(answers.gefahr && !["Keine erkennbar","Unklar"].includes(answers.gefahr)) add(answers.gefahr);
+  } else if(currentCategory==="brand"){
+    add("Brand"); yes("feuersichtbar","Feuer sichtbar");
+    if(answers.rauch==="Stark") add("starke Rauchentwicklung");
+    yes("personen","Personen gefährdet"); yes("vermisst","Personen vermisst"); yes("ausbreitung","Ausbreitung"); yes("verletzte","Verletzte / Rauchgas"); yes("rauchgas","Rauchgasvergiftung");
+  } else if(currentCategory==="abc"){
+    add("ABC / Gefahrgut"); if(answers.stoff) add(answers.stoff); yes("austritt","Stoffaustritt"); yes("betroffen","Personen betroffen"); yes("symptom","medizinische Beschwerden");
+  } else if(currentCategory==="thl"){
+    add("THL"); if(answers.lage) add(answers.lage); yes("personen","Personen betroffen"); yes("schwereverletzung","schwere Verletzung"); yes("akutegefahr","akute Gefahr");
+  } else if(currentCategory==="wasser"){
+    add("Wasser-/Eisunfall"); yes("personen","Person im Wasser / gefährdet"); yes("bewusstsein","Bewusstseinsstörung"); if(answers.atmung==="Nein") add("keine normale Atmung");
+  } else if(currentCategory==="sturz"){
+    add("Sturz"); if(answers.hoehe) add(`aus ca. ${answers.hoehe}`);
+    critical("bewusstsein", {"Verwirrt / desorientiert":"verwirrt","Somnolent":"somnolent","Soporös":"soporös","Bewusstlos":"bewusstlos"});
+    critical("atmung", {"Dyspnoe / erschwerte Atmung":"Dyspnoe","Keine normale Atmung":"keine normale Atmung","Atemstillstand":"Atemstillstand"}); yes("schwereverletzung","schwere Verletzung");
+  } else if(currentCategory==="vergiftung"){
+    add("Vergiftung"); if(answers.stoff) add(answers.stoff);
+    critical("bewusstsein", {"Somnolent":"somnolent","Soporös":"soporös","Bewusstlos":"bewusstlos"});
+    critical("atmung", {"Dyspnoe / erschwerte Atmung":"Dyspnoe","Keine normale Atmung":"keine normale Atmung","Atemstillstand":"Atemstillstand"});
+  } else {
+    add(categoryName(currentCategory).replace(/^.*? /,""));
+    for(const [k,v] of Object.entries(answers)){
+      if(!String(v).trim() || ["Nein","Keine","Unklar","Unbekannt / keine Angabe","Normal","Wach und orientiert"].includes(String(v))) continue;
+      add(String(v));
+    }
+  }
+
+  if(parts.length===0) add(categoryName(currentCategory));
+  // Maximal fünf Lageinformationen, damit der DME-Text überschaubar bleibt.
+  const base=parts.slice(0,6).join(", ");
+  const suffix=reasons.length ? " – NA erforderlich" : "";
+  const resourceHint=(!reasons.length && resources.includes("RTW")) ? " – RTW" : "";
+  let text=base+suffix+resourceHint;
+  // DME-freundliche Begrenzung; niemals mitten im Wort abschneiden.
+  const max=190;
+  if(text.length>max){ text=text.slice(0,max); const cut=text.lastIndexOf(" "); text=(cut>80?text.slice(0,cut):text)+"…"; }
+  return text;
+}
+
+async function finish(){
+  // "Auswertung abschließen" beendet die Abfrage endgültig. Danach werden keine weiteren Fragen mehr angezeigt.
+  const result=generateTexts();
+  finished=true;
+  renderQuestion();
+  if(db&&user){ try{ await push(ref(db,`call_history/${user.uid}`),{category:currentCategory,answers,notarztReasons:result.reasons,resources:result.resources,summary:result.summary,dispatchText:result.dispatch,createdAt:Date.now(),source:"web"}); setStatus("● Abfrage gespeichert"); }catch(e){ console.error(e); alert("Abfrage konnte nicht gespeichert werden: "+e.message); } } else { const h=JSON.parse(localStorage.getItem("einsatzabfrage_history")||"[]"); h.push({category:currentCategory,answers,...result,createdAt:Date.now()}); localStorage.setItem("einsatzabfrage_history",JSON.stringify(h)); }
+  $("finalSummary").scrollIntoView({behavior:"smooth",block:"start"});
+}
 
 async function requireAdmin(){ if(!isAdmin()) throw new Error("Nur der Administrator darf diesen Bereich speichern."); }
 async function write(path,value){ await requireAdmin(); await set(ref(db,path),value); await loadFirebase(); }
