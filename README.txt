@@ -1,0 +1,1 @@
+Diese Version ersetzt index.html, app.js und style.css. firebase-config.js bleibt unveraendert. Nach dem Upload als Verwaltung anmelden und einmal „Grunddaten in Firebase speichern“ ausfuehren, damit der neue medizinische Fragenkatalog in Firebase gespeichert wird.

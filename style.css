@@ -30,3 +30,10 @@ textarea{min-height:110px;resize:vertical}label{display:block;font-weight:700}.f
 #finalSummary,#dispatchText{white-space:pre-wrap;line-height:1.55}
 .dispatch-heading{margin-top:22px;padding-top:18px;border-top:1px solid #303947}
 .status-good{color:#86efac}.status-warn{color:#fcd34d}.status-danger{color:#fca5a5}
+
+.age-info{margin-top:10px;padding:10px 12px;border:1px solid #27875a;border-radius:10px;background:#14251d;color:#bbf7d0;font-weight:700}
+#nextBtn{min-width:150px}
+
+/* Immer sichtbare Weiter-Taste direkt unter den Antworten/Vorschlägen */
+.inline-continue{display:block;width:100%;margin-top:18px;min-height:58px;font-size:1.1rem;font-weight:800}
+#answerArea .suggestions{margin-bottom:4px}

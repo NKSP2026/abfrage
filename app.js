@@ -21,25 +21,26 @@ const Q=(id,text,type,options,order,extra={})=>({id,text,type,options,order,...e
 const defaults = {
   catalog: {
     medizin: {
-      alter:Q("alter","Wie alt ist der Patient?","number",[],10),
-      geschlecht:Q("geschlecht","Geschlecht des Patienten (falls relevant)?","choice",["Männlich","Weiblich","Divers / unbekannt"],20),
-      hauptbeschwerde:Q("hauptbeschwerde","Was ist die Hauptbeschwerde bzw. was ist passiert?","text",[],30),
-      beginn:Q("beginn","Wann haben die Beschwerden begonnen?","choice",["Gerade eben / plötzlich","Vor weniger als 1 Stunde","Vor mehreren Stunden","Unklar"],40),
-      bewusstsein:Q("bewusstsein","Wie ist der Bewusstseinszustand?","choice",["Wach und orientiert","Verwirrt / desorientiert","Somnolent","Soporös","Bewusstlos","Unklar"],50),
-      atmung:Q("atmung","Wie ist die Atmung?","choice",["Normal","Dyspnoe / erschwerte Atmung","Ausgeprägte oder zunehmende Dyspnoe","Keine normale Atmung","Atemstillstand","Unklar"],60),
-      kreislauf:Q("kreislauf","Wie ist der Kreislaufzustand?","choice",["Unauffällig","Schwindel / Kreislaufprobleme","Ausgeprägte Kreislaufinsuffizienz / Schockzeichen","Kreislaufstillstand","Unklar"],70),
-      brustschmerz:Q("brustschmerz","Besteht akuter Brustschmerz oder Druckgefühl im Brustkorb?","choice",["Ja","Nein","Unklar"],80),
-      blutung:Q("blutung","Besteht eine schwere oder nicht beherrschbare Blutung?","choice",["Ja","Nein","Unklar"],90),
-      neurologie:Q("neurologie","Bestehen plötzlich aufgetretene neurologische Auffälligkeiten?","choice",["Keine","Lähmung / Kraftverlust","Sprachstörung","Gesichtslähmung","Krampfanfall","Mehrere / unklar"],100),
-      schmerz:Q("schmerz","Wie stark sind die Schmerzen?","choice",["Keine","Leicht","Mittel","Stark","Sehr stark / nicht auszuhalten","Unklar"],110),
-      vorerkrankung:Q("vorerkrankung","Bestehen relevante Vorerkrankungen?","choice",["Nein","Ja","Unklar"],120),
-      vorerkrankungen:Q("vorerkrankungen","Welche Vorerkrankungen sind bekannt?","text",[],130,{whenQuestion:"vorerkrankung",whenValue:"Ja",suggestionGroup:"vorerkrankungen"}),
-      medikamente:Q("medikamente","Werden regelmäßig Medikamente eingenommen?","choice",["Nein","Ja","Unklar"],140),
-      medikamentenliste:Q("medikamentenliste","Welche Medikamente sind bekannt?","text",[],150,{whenQuestion:"medikamente",whenValue:"Ja",suggestionGroup:"medikamente"}),
-      allergien:Q("allergien","Sind relevante Allergien bekannt?","choice",["Nein","Ja","Unklar"],160),
-      allergieliste:Q("allergieliste","Welche Allergien sind bekannt?","text",[],170,{whenQuestion:"allergien",whenValue:"Ja",suggestionGroup:"allergien"}),
-      schwangerschaft:Q("schwangerschaft","Besteht eine Schwangerschaft oder ist diese möglich?","choice",["Nein","Ja","Unklar / nicht relevant"],180),
-      weitere:Q("weitere","Weitere wichtige Informationen?","text",[],190)
+      betroffen:Q("betroffen","Wen betrifft der medizinische Notfall?","choice",["Mich selbst","Eine andere Person","Mehrere Personen / unklar"],10),
+      geburtsdatum:Q("geburtsdatum","Wann ist die betroffene Person geboren?","date",[],20),
+      geschlecht:Q("geschlecht","Welches Geschlecht hat die betroffene Person?","choice",["Männlich","Weiblich","Divers","Unbekannt / keine Angabe"],30),
+      hauptbeschwerde:Q("hauptbeschwerde","Was ist die Hauptbeschwerde bzw. was ist passiert?","text",[],40),
+      beginn:Q("beginn","Wann haben die Beschwerden begonnen?","choice",["Gerade eben / plötzlich","Vor weniger als 1 Stunde","Vor mehreren Stunden","Seit Tagen","Unklar"],50),
+      bewusstsein:Q("bewusstsein","Wie ist der Bewusstseinszustand?","choice",["Wach und orientiert","Verwirrt / desorientiert","Somnolent","Soporös","Bewusstlos","Unklar"],60),
+      atmung:Q("atmung","Wie ist die Atmung?","choice",["Normal","Dyspnoe / erschwerte Atmung","Ausgeprägte oder zunehmende Dyspnoe","Keine normale Atmung","Atemstillstand","Unklar"],70),
+      kreislauf:Q("kreislauf","Wie ist der Kreislaufzustand?","choice",["Unauffällig","Schwindel / Kreislaufprobleme","Ausgeprägte Kreislaufinsuffizienz / Schockzeichen","Kreislaufstillstand","Unklar"],80),
+      brustschmerz:Q("brustschmerz","Besteht akuter Brustschmerz oder Druckgefühl im Brustkorb?","choice",["Ja","Nein","Unklar"],90),
+      blutung:Q("blutung","Besteht eine schwere oder nicht beherrschbare Blutung?","choice",["Ja","Nein","Unklar"],100),
+      neurologie:Q("neurologie","Bestehen plötzlich aufgetretene neurologische Auffälligkeiten?","choice",["Keine","Lähmung / Kraftverlust","Sprachstörung","Gesichtslähmung","Krampfanfall","Mehrere / unklar"],110),
+      schmerz:Q("schmerz","Wie stark sind die Schmerzen?","choice",["Keine","Leicht","Mittel","Stark","Sehr stark / nicht auszuhalten","Unklar"],120),
+      vorerkrankung:Q("vorerkrankung","Bestehen relevante Vorerkrankungen?","choice",["Nein","Ja","Unklar"],130),
+      vorerkrankungen:Q("vorerkrankungen","Welche Vorerkrankungen sind bekannt?","text",[],140,{whenQuestion:"vorerkrankung",whenValue:"Ja",suggestionGroup:"vorerkrankungen"}),
+      medikamente:Q("medikamente","Werden regelmäßig Medikamente eingenommen?","choice",["Nein","Ja","Unklar"],150),
+      medikamentenliste:Q("medikamentenliste","Welche Medikamente sind bekannt?","text",[],160,{whenQuestion:"medikamente",whenValue:"Ja",suggestionGroup:"medikamente"}),
+      allergien:Q("allergien","Sind relevante Allergien bekannt?","choice",["Nein","Ja","Unklar"],170),
+      allergieliste:Q("allergieliste","Welche Allergien sind bekannt?","text",[],180,{whenQuestion:"allergien",whenValue:"Ja",suggestionGroup:"allergien"}),
+      schwangerschaft:Q("schwangerschaft","Besteht eine Schwangerschaft oder ist diese möglich?","choice",["Nein","Ja","Unklar / nicht relevant"],190),
+      weitere:Q("weitere","Weitere wichtige Informationen?","text",[],200)
     },
     vu: {
       personen:Q("personen","Sind Personen verletzt oder medizinisch betroffen?","choice",["Ja","Nein","Unklar"],10),
@@ -162,6 +163,28 @@ function questionsFor(category){ const raw=Object.values(data.catalog?.[category
 function visibleQuestions(){ return currentQuestions.filter(q=>!q.whenQuestion || answers[q.whenQuestion]===q.whenValue); }
 function start(category){ currentCategory=category; currentQuestions=questionsFor(category); currentIndex=0; answers={}; $("home").hidden=true; $("admin").hidden=true; $("call").hidden=false; $("categoryTitle").textContent=categoryName(category); renderQuestion(); evaluate(); }
 
+function calculateAge(dateString){
+  if(!dateString) return "";
+  const d=new Date(dateString+"T00:00:00");
+  if(Number.isNaN(d.getTime())) return "";
+  const now=new Date();
+  let age=now.getFullYear()-d.getFullYear();
+  const beforeBirthday=now.getMonth()<d.getMonth() || (now.getMonth()===d.getMonth() && now.getDate()<d.getDate());
+  if(beforeBirthday) age--;
+  return age>=0 && age<=130 ? String(age) : "";
+}
+function canContinue(q){
+  if(!q) return false;
+  const v=answers[q.id];
+  return String(v??"").trim()!=="";
+}
+function nextQuestion(){
+  const qs=visibleQuestions();
+  const q=qs[currentIndex];
+  if(!canContinue(q)){ alert("Bitte beantworte zuerst die aktuelle Frage."); return; }
+  if(currentIndex<qs.length-1){ currentIndex++; renderQuestion(); }
+  else finish();
+}
 function renderQuestion(){
   const qs=visibleQuestions(); if(!qs.length){ $("questionText").textContent="Keine Fragen vorhanden."; return; }
   currentIndex=Math.max(0,Math.min(currentIndex,qs.length-1)); const q=qs[currentIndex];
@@ -169,12 +192,44 @@ function renderQuestion(){
   const area=$("answerArea"); area.innerHTML="";
   if(q.type==="choice"){
     const wrap=document.createElement("div"); wrap.className="answer-options";
-    (q.options||[]).forEach(v=>{ const b=document.createElement("button"); b.type="button"; b.className="answer-option"+(answers[q.id]===v?" selected":""); b.textContent=v; b.onclick=()=>{ answers[q.id]=v; evaluate(); const now=visibleQuestions(); if(currentIndex<now.length-1) currentIndex++; renderQuestion(); }; wrap.appendChild(b); }); area.appendChild(wrap);
+    (q.options||[]).forEach(v=>{ const b=document.createElement("button"); b.type="button"; b.className="answer-option"+(answers[q.id]===v?" selected":""); b.textContent=v; b.onclick=()=>{ answers[q.id]=v; evaluate(); renderQuestion(); }; wrap.appendChild(b); }); area.appendChild(wrap);
   }else{
-    const input=document.createElement(q.type==="text"?"textarea":"input"); if(q.type==="number") input.type="number"; input.value=answers[q.id]||""; input.oninput=()=>{ answers[q.id]=input.value; evaluate(); renderSuggestionButtons(input,q); };
-    area.appendChild(input); if(q.type==="text"&&q.suggestionGroup){ const sw=document.createElement("div"); sw.className="suggestions"; sw.id="dynamicSuggestions"; area.appendChild(sw); renderSuggestionButtons(input,q); }
+    const input=document.createElement(q.type==="text"?"textarea":"input");
+    if(q.type==="number") input.type="number";
+    if(q.type==="date") input.type="date";
+    input.value=answers[q.id]||"";
+    const ageInfo=document.createElement("div"); ageInfo.className="age-info";
+    const updateValue=()=>{
+      answers[q.id]=input.value;
+      if(q.id==="geburtsdatum"){
+        const age=calculateAge(input.value);
+        if(age){ answers.alter=age; ageInfo.textContent=`Automatisch berechnetes Alter: ${age} Jahre`; }
+        else { delete answers.alter; ageInfo.textContent=input.value?"Geburtsdatum bitte prüfen.":""; }
+      }
+      evaluate(); renderSuggestionButtons(input,q);
+    };
+    input.oninput=updateValue; input.onchange=updateValue;
+    area.appendChild(input);
+    if(q.id==="geburtsdatum"){ if(answers.alter) ageInfo.textContent=`Automatisch berechnetes Alter: ${answers.alter} Jahre`; area.appendChild(ageInfo); }
+    if(q.type==="text"&&q.suggestionGroup){ const sw=document.createElement("div"); sw.className="suggestions"; sw.id="dynamicSuggestions"; area.appendChild(sw); renderSuggestionButtons(input,q); }
   }
-  $("previousBtn").disabled=currentIndex===0; renderSummary();
+  // Der große Weiter-Button wird bewusst DIREKT unter jeder Antwort angezeigt.
+  // So bleibt der nächste Schritt auch bei vielen Vorschlägen (z. B. Benzin,
+  // Gefahrstoffen, Vorerkrankungen oder Medikamenten) sofort erreichbar.
+  const inlineAction=document.createElement("button");
+  inlineAction.type="button";
+  inlineAction.className="inline-continue";
+  const isLastQuestion=currentIndex===qs.length-1;
+  inlineAction.textContent=isLastQuestion?"Auswertung abschließen":"Weiter →";
+  inlineAction.onclick=()=>{ if(isLastQuestion) finish(); else nextQuestion(); };
+  area.appendChild(inlineAction);
+
+  $("previousBtn").disabled=currentIndex===0;
+  const last=currentIndex===qs.length-1;
+  $("nextBtn").hidden=last;
+  $("finishBtn").hidden=!last;
+  $("nextBtn").textContent="Weiter →";
+  renderSummary();
 }
 function renderSuggestionButtons(input,q){ const sw=$("dynamicSuggestions"); if(!sw) return; const group=data.suggestions?.[q.suggestionGroup]||[]; sw.innerHTML=""; group.filter(x=>!input.value||x.toLowerCase().includes(input.value.toLowerCase())).slice(0,10).forEach(x=>{ const b=document.createElement("button"); b.type="button"; b.className="suggestion-btn"; b.textContent=x; b.onclick=()=>{ input.value=x; answers[q.id]=x; evaluate(); renderSuggestionButtons(input,q); }; sw.appendChild(b); }); }
 
@@ -186,8 +241,8 @@ function matchedResources(reasons){ const resources=new Set(); for(const r of Ob
 function evaluate(){ const reasons=matchedNotarztRules(); const resources=matchedResources(reasons);
   $("notarztSummary").innerHTML=reasons.length?`<strong class="status-danger">Notarzt-/NEF-Regel ausgelöst</strong><br>${reasons.map(x=>`<div class="item">• ${esc(x)}</div>`).join("")}`:`<strong class="status-good">Keine hinterlegte Notarztregel ausgelöst</strong><div class="item">Die endgültige Disposition bleibt fachlich zu prüfen.</div>`;
   $("resourceSummary").innerHTML=resources.map(x=>`<div class="item">• ${esc(x)}</div>`).join(""); renderSummary(); return {reasons,resources}; }
-function renderSummary(){ const map=new Map(currentQuestions.map(q=>[q.id,q.text])); $("answerSummary").innerHTML=Object.entries(answers).length?Object.entries(answers).map(([k,v])=>`<div class="item"><strong>${esc(map.get(k)||k)}:</strong> ${esc(v)}</div>`).join(""):"Noch keine Antworten."; }
-function generateTexts(){ const {reasons,resources}=evaluate(); const qs=new Map(currentQuestions.map(q=>[q.id,q.text])); const lines=Object.entries(answers).filter(([,v])=>String(v).trim()).map(([k,v])=>`${qs.get(k)||k}: ${v}`);
+function renderSummary(){ const map=new Map(currentQuestions.map(q=>[q.id,q.text])); map.set("alter","Automatisch berechnetes Alter"); $("answerSummary").innerHTML=Object.entries(answers).length?Object.entries(answers).map(([k,v])=>`<div class="item"><strong>${esc(map.get(k)||k)}:</strong> ${esc(v)}${k==="alter"?" Jahre":""}</div>`).join(""):"Noch keine Antworten."; }
+function generateTexts(){ const {reasons,resources}=evaluate(); const qs=new Map(currentQuestions.map(q=>[q.id,q.text])); qs.set("alter","Automatisch berechnetes Alter"); const lines=Object.entries(answers).filter(([,v])=>String(v).trim()).map(([k,v])=>`${qs.get(k)||k}: ${v}`);
   const summary=`Einsatzthema: ${categoryName(currentCategory)}.\n`+lines.join("\n")+`\n\nNotarzt-/NEF-Bewertung: ${reasons.length?"Regel ausgelöst – "+reasons.join("; "):"keine hinterlegte Regel ausgelöst."}\nEinsatzmittelvorschlag: ${resources.join(", ")}.`;
   const age=answers.alter?`${answers.alter} Jahre, `:""; const key=[];
   if(answers.hauptbeschwerde) key.push(answers.hauptbeschwerde); if(answers.eingeklemmt==="Ja") key.push("Person eingeklemmt"); if(answers.bewusstsein) key.push(`Bewusstsein: ${answers.bewusstsein}`); if(answers.atmung) key.push(`Atmung: ${answers.atmung}`); if(answers.schwereverletzung==="Ja") key.push("Verdacht auf schwere Verletzung"); if(answers.blutung==="Ja") key.push("schwere Blutung"); if(answers.brustschmerz==="Ja") key.push("akuter Brustschmerz"); if(answers.neurologie&&answers.neurologie!=="Keine") key.push(`neurologisch: ${answers.neurologie}`); if(answers.vorerkrankungen) key.push(`Vorerkrankungen: ${answers.vorerkrankungen}`);
@@ -208,6 +263,7 @@ async function seed(){ await requireAdmin(); for(const [path,val] of Object.entr
 document.querySelectorAll(".category").forEach(b=>b.onclick=()=>start(b.dataset.category));
 $("backHome").onclick=()=>{ $("call").hidden=true; $("home").hidden=false; };
 $("previousBtn").onclick=()=>{ currentIndex--; renderQuestion(); };
+$("nextBtn").onclick=nextQuestion;
 $("finishBtn").onclick=finish;
 $("adminBtn").onclick=()=>{ if(isAdmin()){ $("loginModal").hidden=true; $("loginModal").style.display="none"; $("home").hidden=true; $("call").hidden=true; $("admin").hidden=false; } else { $("loginError").textContent=""; $("loginModal").hidden=false; $("loginModal").style.display="grid"; } };
 $("closeAdmin").onclick=()=>{ $("admin").hidden=true; $("home").hidden=false; };
