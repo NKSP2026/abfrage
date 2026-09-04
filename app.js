@@ -91,6 +91,7 @@ async function initFirebase(){
       // darf niemals ein altes Login-Fenster darüber liegen bleiben.
       if(admin){
         $("loginModal").hidden = true;
+      $("loginModal").style.display = "none";
       }
 
       if(!u){
@@ -271,18 +272,21 @@ $("finishBtn").onclick=finish;
 $("adminBtn").onclick=()=>{
   if(isAdmin()){
     $("loginModal").hidden = true;
+      $("loginModal").style.display = "none";
     $("home").hidden = true;
     $("call").hidden = true;
     $("admin").hidden = false;
   } else {
     $("loginError").textContent = "";
     $("loginModal").hidden = false;
+    $("loginModal").style.display = "grid";
   }
 };
 $("closeAdmin").onclick=()=>{ $("admin").hidden=true; $("home").hidden=false; };
 $("cancelLogin").onclick=()=>{
   $("loginError").textContent = "";
   $("loginModal").hidden = true;
+      $("loginModal").style.display = "none";
 };
 $("doLogin").onclick=async()=>{
   try{
@@ -305,6 +309,7 @@ $("doLogin").onclick=async()=>{
     user = credential.user;
     $("logoutBtn").hidden = false;
     $("loginModal").hidden = true;
+      $("loginModal").style.display = "none";
     $("home").hidden = true;
     $("call").hidden = true;
     $("admin").hidden = false;
@@ -327,6 +332,7 @@ fillCategories();
 
 // Das Verwaltungsfenster darf niemals automatisch beim Öffnen erscheinen.
 $("loginModal").hidden = true;
+      $("loginModal").style.display = "none";
 $("admin").hidden = true;
 $("call").hidden = true;
 $("home").hidden = false;

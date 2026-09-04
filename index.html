@@ -145,12 +145,12 @@
     <input id="loginPassword" type="password" placeholder="Passwort">
     <div class="nav-row">
       <button id="doLogin">Anmelden</button>
-      <button id="cancelLogin" class="secondary">Abbrechen</button>
+      <button id="cancelLogin" class="secondary" type="button" onclick="document.getElementById('loginError').textContent=''; document.getElementById('loginModal').hidden=true; document.getElementById('loginModal').style.display='none';">Abbrechen</button>
     </div>
     <div id="loginError" class="error"></div>
   </div>
 </div>
 
-<script type="module" src="./app.js?v=3"></script>
+<script type="module" src="./app.js?v=4"></script>
 </body>
 </html>
