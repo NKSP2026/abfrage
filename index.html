@@ -1,39 +1,372 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Notrufabfrage</title><style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#0f172a;color:#f8fafc}header{padding:18px 4%;background:#111827;border-bottom:1px solid #334155;display:flex;justify-content:space-between}main{max-width:1450px;margin:auto;padding:24px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px}.card,.panel{background:#1e293b;border:1px solid #334155;border-radius:14px;padding:20px}.card{cursor:pointer;min-height:145px;border-left:5px solid #3b82f6}.card:hover{background:#263548}.card b{display:block;font-size:20px;margin-top:12px}.muted{color:#94a3b8}.hidden{display:none}.layout{display:grid;grid-template-columns:2fr 1fr;gap:18px}.answer{display:block;width:100%;padding:16px;margin:10px 0;text-align:left;background:#263548;color:#fff;border:1px solid #475569;border-radius:9px;font-size:17px;cursor:pointer}.answer:hover{border-color:#60a5fa}button{padding:12px 16px;border:0;border-radius:8px;cursor:pointer;font-weight:bold}.primary{background:#2563eb;color:#fff}.green{background:#16a34a;color:#fff}.back{background:#475569;color:#fff}.progress{height:7px;background:#334155;border-radius:5px;margin:18px 0}.progress div{height:100%;background:#22c55e;border-radius:5px}.question{font-size:27px}.item{padding:10px 0;border-bottom:1px solid #334155}.label{display:block;color:#94a3b8;font-size:12px}.warn{margin-top:15px;padding:14px;background:#3b1717;border:1px solid #7f1d1d;border-radius:10px}.rec{margin-top:15px;padding:14px;background:#102b1b;border:1px solid #166534;border-radius:10px}.tag{display:inline-block;background:#14532d;padding:7px 10px;border-radius:20px;margin:4px}.nav{display:flex;justify-content:space-between;margin-top:25px}.result{white-space:pre-wrap;background:#0b1220;padding:16px;border-radius:10px;line-height:1.55}textarea{width:100%;min-height:100px;background:#0b1220;color:#fff;border:1px solid #475569;border-radius:8px;padding:12px;font:inherit}@media(max-width:850px){.layout{grid-template-columns:1fr}.question{font-size:22px}}
-</style></head><body><header><div><b>📞 STRUKTURIERTE NOTRUFABFRAGE</b><div class="muted">ohne Einsatzort-Abfrage · automatische Notarztentscheidung</div></div><div id="timer">⏱ 00:00</div></header>
-<main id="home"><h2>Was ist passiert?</h2><div class="grid">
-<div class="card" onclick="start('brand')">🔥<b>Brand / Rauch</b><small>Feuer, Rauch, Explosion</small></div><div class="card" onclick="start('medizin')">🚑<b>Medizinischer Notfall</b><small>Bewusstsein, Atmung, Kreislauf</small></div><div class="card" onclick="start('abc')">☣️<b>ABC / Gefahrgut</b><small>Stoffe, Gas, Chemie</small></div><div class="card" onclick="start('thl')">🛠️<b>Technische Hilfeleistung</b><small>Tür, Maschine, Verschüttung</small></div><div class="card" onclick="start('vu')">🚗<b>Verkehrsunfall</b><small>Unfall, Verletzte, Einklemmung</small></div><div class="card" onclick="start('wasser')">🌊<b>Wasserrettung</b><small>Wasser-, Eis-, Ertrinkungsunfall</small></div><div class="card" onclick="start('sonstiges')">❓<b>Sonstiges</b><small>Freie strukturierte Abfrage</small></div>
-</div></main>
-<main id="app" class="hidden"><button class="back" onclick="home()">← Einsatzart ändern</button><h2 id="title"></h2><div class="layout"><section class="panel"><div id="counter" class="muted"></div><div class="progress"><div id="bar"></div></div><div id="box"></div><div class="nav"><button class="back" onclick="prev()">← Zurück</button><button class="green" onclick="finish()">Auswertung →</button></div></section><aside class="panel"><h2>📋 Angaben</h2><div id="summary">Noch keine Angaben.</div><div class="warn"><b>⚠️ Medizinische / kritische Hinweise</b><div id="critical">Keine.</div></div><div class="rec"><b>🚨 Einsatzmittelvorschlag</b><div id="resources">Noch nicht auswertbar.</div></div></aside></div></main>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Strukturierte Notrufabfrage V5 – automatische Weiterleitung</title>
+<style>
+:root{--bg:#0b1220;--panel:#172033;--line:#34445d;--muted:#9aa9bd;--accent:#2f80ed;--ok:#1d9b5d;--warn:#d99000;--danger:#d64545}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f7f9fc;font-family:Arial,Helvetica,sans-serif}
+header{padding:18px 4%;background:#111827;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:center}
+h1,h2,h3{margin-top:0}.sub,.muted{color:var(--muted)}main{max-width:1500px;margin:auto;padding:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}.card{cursor:pointer;min-height:150px;border-left:5px solid var(--accent);transition:.15s}.card:hover{transform:translateY(-2px);background:#202d44}.card b{display:block;font-size:19px;margin:10px 0 6px}.icon{font-size:34px}
+.hidden{display:none!important}.layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(350px,1fr);gap:18px}.question{font-size:26px;line-height:1.3}.help{color:var(--muted);line-height:1.5}
+.answer{display:block;width:100%;padding:15px;margin:9px 0;text-align:left;background:#243149;color:#fff;border:1px solid #4b5e7a;border-radius:9px;font-size:16px;cursor:pointer}.answer:hover{border-color:#67a8ff}
+textarea,input{width:100%;background:#0b1220;border:1px solid #50617b;color:#fff;border-radius:9px;padding:13px;font-size:16px}textarea{min-height:110px}
+button{font:inherit;font-weight:bold;padding:11px 15px;border:0;border-radius:9px;cursor:pointer}.primary{background:var(--accent);color:#fff}.back{background:#46566e;color:#fff}.finish{background:var(--ok);color:#fff}.nav{display:flex;justify-content:space-between;gap:10px;margin-top:24px}
+.progress{height:7px;background:#334155;border-radius:9px;margin:16px 0}.progress>div{height:100%;background:#24b36b;border-radius:9px;transition:.2s}.item{padding:10px 0;border-bottom:1px solid var(--line)}.label{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}
+.box{margin-top:16px;padding:14px;border-radius:10px}.critical{background:#3a171c;border:1px solid #87313a}.recommend{background:#102d22;border:1px solid #236b48}.neutral{background:#132136;border:1px solid #37506e}.tag{display:inline-block;background:#165c3b;padding:7px 10px;border-radius:20px;margin:4px 4px 4px 0}.reason{padding:6px 0}.result{white-space:pre-wrap;line-height:1.55;background:#09101d;padding:18px;border-radius:10px}
+.notice{margin-top:22px;padding:15px;background:#38290f;border:1px solid #765713;border-radius:10px;color:#ffe5a0}
+.small{font-size:13px}@media(max-width:900px){.layout{grid-template-columns:1fr}.question{font-size:22px}header{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header>
+<div><h1>📞 STRUKTURIERTE NOTRUFABFRAGE</h1><div class="sub">ohne Einsatzort-Abfrage · automatische Auswertung der hinterlegten Kriterien</div></div>
+<div id="timer">⏱ 00:00</div>
+</header>
+
+<main id="home">
+<h2>Was ist passiert?</h2>
+<div class="grid" id="menu"></div>
+<div class="notice"><b>Wichtig:</b> Dieses Programm ist eine selbst erstellte Einsatzunterstützung. Die automatische Notarztentscheidung ist nur so belastbar wie die hinterlegten Regeln und muss vor produktivem Leitstellenbetrieb durch die zuständige Leitstelle bzw. den Ärztlichen Leiter Rettungsdienst gegen die örtlich geltenden Vorgaben und AAO freigegeben werden.</div>
+</main>
+
+<main id="app" class="hidden">
+<button class="back" onclick="goHome()">← Einsatzart ändern</button>
+<h2 id="title" style="margin-top:16px"></h2>
+<div class="layout">
+<section class="panel">
+<div id="counter" class="muted"></div>
+<div class="progress"><div id="bar"></div></div>
+<div id="questionBox"></div>
+<div class="nav"><button class="back" id="prevBtn" onclick="previous()">← Zurück</button><button class="finish" onclick="finish()">Auswertung →</button></div>
+</section>
+<aside class="panel">
+<h2>📋 Erfasste Angaben</h2><div id="summary">Noch keine Angaben.</div>
+<div class="box critical"><h3>⚠️ Automatisch erkannte Kriterien</h3><div id="critical">Noch keine.</div></div>
+<div class="box recommend"><h3>🚨 Einsatzmittelvorschlag</h3><div id="resources">Noch nicht auswertbar.</div></div>
+<div class="box neutral small"><b>Hinweis:</b> Vorerkrankungen, Medikamente und Risikofaktoren werden als Zusatzinformationen in die Auswertung einbezogen. Eine Vorerkrankung allein löst in dieser Version jedoch nicht automatisch einen Notarztvorschlag aus; maßgeblich sind akute Vitalfunktionsstörung, schwere Schädigung oder hinterlegte notfallbezogene Ereigniskriterien.</div>
+</aside>
+</div>
+</main>
+
 <script>
-const Q=(id,t,o,type='choice')=>({id,t,o,type});
+const T=(id,title,icon)=>({id,title,icon});
+const menu=[
+T('medizin','Medizinischer Notfall','🚑'),T('vu','Verkehrsunfall','🚗'),T('brand','Brand / Rauch / Explosion','🔥'),
+T('abc','ABC / Gefahrgut','☣️'),T('thl','Technische Hilfeleistung','🛠️'),T('wasser','Wasser- / Eisrettung','🌊'),
+T('sturz','Sturz / Höhen- und Tiefenrettung','⬇️'),T('gewalt','Gewalt / Bedrohung / Verletzung','⚠️'),
+T('vergiftung','Vergiftung','🧪'),T('strom','Strom / Blitz','⚡'),T('geburt','Geburtshilfe','👶'),T('sonstiges','Sonstiger Einsatz','❓')
+];
+menu.forEach(x=>menuEl=document.getElementById('menu').insertAdjacentHTML('beforeend',`<div class="card" onclick="start('${x.id}')"><div class="icon">${x.icon}</div><b>${x.title}</b><span class="muted">Strukturierte Folgefragen und Auswertung</span></div>`));
+
+const q=(id,text,options=[],type='choice',when=null,help='')=>({id,text,options,type,when,help});
+const yesno=['Ja','Nein','Unklar'];
+
+const basePatient=[
+q('anzahl','Wie viele Patienten bzw. Betroffene gibt es?',[],'text'),
+q('alter','Wie alt ist der Patient ungefähr?',[],'text'),
+q('geschlecht','Welches biologische Geschlecht ist bekannt?',['Männlich','Weiblich','Divers / unklar']),
+q('bewusstsein','Wie ist das Bewusstsein?',['Wach und orientiert','Verwirrt / desorientiert','Somnolent – deutlich schläfrig, aber weckbar','Soporös – Reaktion nur auf starke Reize','Bewusstlos – keine adäquate Reaktion auf Ansprache und Rütteln']),
+q('atmung','Wie ist die Atmung?',['Normal','Dyspnoe – Atemnot','Ausgeprägte bzw. zunehmende Dyspnoe','Keine normale Atmung','Atemstillstand']),
+q('kreislauf','Wie ist der Kreislauf?',['Keine Auffälligkeit bekannt','Schwindel / Kollapsneigung','Ausgeprägte bzw. zunehmende Kreislaufinsuffizienz','Schockzeichen','Kreislaufstillstand']),
+q('vorerkrankungen','Sind relevante Vorerkrankungen bekannt?',yesno),
+q('welcheVorerkrankungen','Welche Vorerkrankungen sind bekannt?',[],'text',a=>a.vorerkrankungen==='Ja','z. B. Herzinsuffizienz, KHK, Asthma, COPD, Diabetes, Epilepsie, Schlaganfall, Demenz, Dialyse, Krebs.'),
+q('medikamente','Werden regelmäßig Medikamente eingenommen?',yesno),
+q('welcheMedikamente','Welche Medikamente bzw. Wirkstoffgruppen sind bekannt?',[],'text',a=>a.medikamente==='Ja','Besonders relevant: Antikoagulanzien/Blutverdünner, Insulin, Betablocker, Opiate, Psychopharmaka.'),
+q('allergien','Sind schwere Allergien oder Anaphylaxie bekannt?',yesno),
+q('antikoag','Nimmt der Patient Blutverdünner/Antikoagulanzien ein?',yesno),
+q('schwanger','Ist eine Schwangerschaft möglich bzw. bekannt?',['Ja','Nein','Nicht zutreffend / unklar'])
+];
+
 const C={
-brand:{name:'🔥 Brand / Rauch',q:[Q('was','Was ist passiert?',['Feuer sichtbar','Rauchentwicklung','Brandgeruch','Explosion','Unklar']),Q('obj','Was ist betroffen?',['Wohnung/Wohngebäude','Keller','Dach','Fahrzeug','Vegetation','Gewerbe/Industrie','Sonstiges']),Q('pers','Sind Personen beteiligt, gefährdet oder vermisst?',['Ja','Nein','Unklar']),Q('verletzte','Gibt es Verletzte?',['Ja','Nein','Unklar']),Q('ausb','Breitet sich Feuer/Rauch aus?',['Ja','Nein','Unklar'])]},
-medizin:{name:'🚑 Medizinischer Notfall',q:[Q('was','Was ist das hauptsächliche Problem?',['Bewusstseinsstörung','Atemproblem','Brustschmerz','Kreislaufproblem','Starke Blutung','Krampfanfall','Lähmung/Sprachstörung','Schwere Verletzung','Vergiftung','Verbrennung','Geburt','Sonstiges']),Q('anz','Wie viele Patienten sind betroffen?',[],'text'),Q('bew','Wie ist das Bewusstsein?',['Wach und orientiert','Somnolent / deutlich schläfrig','Soporös / nur auf starke Reize','Bewusstlos / reagiert nicht adäquat']),Q('atm','Wie ist die Atmung?',['Normale Atmung','Dyspnoe (ausgeprägt/zunehmend)','Keine normale Atmung','Atemstillstand']),Q('brust','Besteht akuter Thoraxschmerz?',['Ja','Nein','Unklar']),Q('kreis','Wie ist der Kreislauf?',['Stabil','Ausgeprägte/zunehmende Kreislaufinsuffizienz','Schockzeichen','Kreislaufstillstand','Unklar']),Q('blut','Besteht eine schwere Blutung?',['Ja','Nein','Unklar']),Q('schwer','Liegt eine schwere Verletzung vor?',['Ja','Nein','Unklar']),Q('neuro','Bestehen akute neurologische Ausfälle?',['Ja – akute Lähmung/Sprachstörung','Nein','Unklar']),Q('beginn','Wann haben die Beschwerden begonnen?',[],'text')]},
-abc:{name:'☣️ ABC / Gefahrgut',q:[Q('was','Was ist passiert?',['Stoff tritt aus','Unbekannter Stoff','Gasgeruch/Gasaustritt','Chemischer Unfall','Gefahrgutunfall','Sonstiges']),Q('stoff','Welcher Stoff oder welche Kennzeichnung?',[],'text'),Q('aus','Tritt der Stoff noch aus?',['Ja','Nein','Unklar']),Q('pers','Sind Personen betroffen?',['Ja','Nein','Unklar']),Q('expl','Besteht Brand-/Explosionsgefahr?',['Ja','Nein','Unklar'])]},
-thl:{name:'🛠️ Technische Hilfeleistung',q:[Q('was','Was ist passiert?',['Person hinter verschlossener Tür','Person im Aufzug','Wasserschaden','Baum/Objekt','Stromleitung','Gasleitung','Maschinenunfall','Verschüttung','Sonstiges']),Q('pers','Sind Personen verletzt oder gefährdet?',['Ja','Nein','Unklar']),Q('eing','Ist eine Person eingeklemmt?',['Ja','Nein','Unklar']),Q('gefahr','Besteht weitere Gefahr?',['Ja','Nein','Unklar'])]},
-vu:{name:'🚗 Verkehrsunfall',q:[Q('was','Was ist passiert?',['Zusammenstoß','Fahrzeug gegen Hindernis','Überschlag','Motorradunfall','Fußgänger/Fahrrad','LKW/Bus','Unklar']),Q('fz','Wie viele Fahrzeuge?',[],'text'),Q('pers','Wie viele Personen sind betroffen?',[],'text'),Q('verletzte','Gibt es Verletzte?',['Ja','Nein','Unklar']),Q('eing','Ist jemand eingeklemmt?',['Ja','Nein','Unklar']),Q('schwer','Handelt es sich um einen schweren Verkehrsunfall?',['Ja','Nein','Unklar']),Q('brand','Brennt oder raucht ein Fahrzeug?',['Ja','Nein','Unklar']),Q('gg','Ist Gefahrgut beteiligt?',['Ja','Nein','Unklar'])]},
-wasser:{name:'🌊 Wasserrettung',q:[Q('was','Was ist passiert?',['Person im Wasser','Ertrinkungsunfall','Eisunfall','Bootsunfall','Sonstiges']),Q('pers','Wie viele Personen?',[],'text'),Q('im','Befindet sich noch jemand im Wasser?',['Ja','Nein','Unklar']),Q('atm','Atmet die Person normal?',['Ja','Nein','Unklar'])]},
-sonstiges:{name:'❓ Sonstiger Einsatz',q:[Q('was','Was ist passiert?',[],'text'),Q('pers','Sind Personen betroffen?',['Ja','Nein','Unklar']),Q('verletzte','Gibt es Verletzte/Erkrankte?',['Ja','Nein','Unklar']),Q('gefahr','Besteht unmittelbare Gefahr?',['Ja','Nein','Unklar'])]}
+medizin:{title:'🚑 Medizinischer Notfall',questions:[
+q('hauptproblem','Was ist das hauptsächliche akute Problem?',['Bewusstseinsstörung','Atemnot','Thoraxschmerz','Herzrasen / Rhythmusproblem','Bauchschmerz','Starke Blutung','Krampfanfall','Akute Lähmung / Sprachstörung','Schwere Verletzung','Verbrennung','Vergiftung','Allergische Reaktion','Psychische Krise','Sonstiges']),
+...basePatient,
+q('beginn','Wann haben die Beschwerden begonnen bzw. wann war die Person zuletzt symptomfrei?',[],'text'),
+q('brust','Besteht akuter Thoraxschmerz?',yesno,a=>true),
+q('ausstrahlung','Strahlt der Schmerz z. B. in Arm, Schulter, Rücken oder Kiefer aus?',yesno,'choice',a=>a.brust==='Ja'),
+q('neuro','Bestehen plötzlich aufgetretene Lähmungen, Sprachstörungen oder ein hängender Mundwinkel?',yesno),
+q('krampf','Liegt aktuell ein Krampfanfall vor oder bestand kürzlich einer?',yesno),
+q('blutung','Besteht eine schwere oder nicht beherrschbare Blutung?',yesno),
+q('schmerz','Bestehen starke akute Schmerzen?',yesno),
+q('trauma','Gab es ein Trauma oder einen Unfall?',yesno),
+q('schaedigung','Liegt eine schwere Verletzung vor?',yesno,a=>a.trauma==='Ja'),
+q('kind','Handelt es sich um ein Kind?',yesno),
+q('geburtAkut','Ist eine Geburt unmittelbar im Gange?',yesno,a=>a.geschlecht==='Weiblich'),
+q('zusatz','Weitere wichtige Angaben',[],'text')
+]},
+vu:{title:'🚗 Verkehrsunfall',questions:[
+q('unfallart','Was ist passiert?',['Zusammenstoß','Frontalzusammenstoß','Seitenaufprall','Auffahrunfall','Überschlag','Motorradunfall','Fußgänger/Fahrrad beteiligt','Fahrzeug gegen Hindernis','Unklar']),
+q('fahrzeuge','Wie viele Fahrzeuge sind beteiligt?',[],'text'),
+q('fahrzeugarten','Welche Fahrzeuge sind beteiligt?',[],'text'),
+q('verletzte','Gibt es Verletzte?',yesno),
+q('anzahlVerletzte','Wie viele Verletzte?',[],'text',a=>a.verletzte==='Ja'),
+q('schwerVU','Gibt es Hinweise auf einen schweren Verkehrsunfall?',yesno),
+q('eingeklemmt','Ist eine Person massiv eingeklemmt?',yesno),
+q('eingeschlossen','Ist eine Person nur eingeschlossen, aber nicht eingeklemmt?',yesno),
+q('kindVU','Sind Kinder betroffen?',yesno),
+q('bewVU','Ist ein Verletzter bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmVU','Hat ein Verletzter keine normale Atmung oder schwere Atemnot?',yesno),
+q('blutVU','Gibt es eine schwere Blutung?',yesno),
+q('brandVU','Brennt oder raucht ein Fahrzeug?',yesno),
+q('ggVU','Ist Gefahrgut beteiligt?',yesno),
+q('austrittVU','Treten Betriebsstoffe oder unbekannte Stoffe aus?',yesno),
+...basePatient.filter(x=>['vorerkrankungen','welcheVorerkrankungen','medikamente','welcheMedikamente','antikoag'].includes(x.id))
+]},
+brand:{title:'🔥 Brand / Rauch / Explosion',questions:[
+q('brandart','Was ist passiert?',['Offenes Feuer sichtbar','Starke Rauchentwicklung','Brandgeruch','Explosion','Unklare Rauchentwicklung']),
+q('objekt','Was ist betroffen?',['Wohnung/Wohngebäude','Keller','Dach','Fahrzeug','Industrie/Gewerbe','Vegetation','Müll/Container','Sonstiges']),
+q('personenBrand','Gibt es Hinweise auf Personenbeteiligung?',yesno),
+q('vermisst','Werden Personen vermisst?',yesno),
+q('verletzteBrand','Gibt es Verletzte?',yesno),
+q('rauchgas','Besteht Verdacht auf Rauchgasinhalation?',yesno),
+q('bewBrand','Ist eine Person bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmBrand','Besteht keine normale Atmung oder ausgeprägte/zunehmende Dyspnoe?',yesno),
+q('explosion','Gab es eine Explosion mit Personenbeteiligung?',yesno),
+q('sonderBrand','Besondere Gefahren?', ['Keine bekannt','Gasflaschen/Druckbehälter','PV/elektrische Anlage','Gefahrstoffe','Mehrere der genannten','Unklar'])
+]},
+abc:{title:'☣️ ABC / Gefahrgut',questions:[
+q('abcArt','Was ist passiert?',['Stoffaustritt','Unbekannter Stoff','Gasgeruch/Gasaustritt','Chemischer Unfall','Gefahrgutunfall','Biologische Gefahr','Radioaktive Gefahr / unklar','Sonstiges']),
+q('stoff','Welcher Stoff bzw. welche Kennzeichnung ist bekannt?',[],'text'),
+q('warntafeln','Sind orangefarbene Warntafeln oder Gefahrzettel sichtbar?',yesno),
+q('nummern','Welche Nummern/Angaben sind sichtbar?',[],'text',a=>a.warntafeln==='Ja'),
+q('form','In welcher Form liegt der Stoff vor?',['Gas/Dampf','Flüssigkeit','Feststoff/Pulver','Rauch/Aerosol','Unklar']),
+q('austritt','Tritt der Stoff noch aus?',yesno),
+q('brandABC','Brennt oder raucht der Stoff?',yesno),
+q('geruch','Gibt es einen stechenden Geruch oder auffällige Wolke?',yesno),
+q('symptomeUmfeld','Husten, Augenbrennen oder Atembeschwerden bei Personen in der Nähe?',yesno),
+q('personenABC','Sind Personen direkt betroffen oder kontaminiert?',yesno),
+q('vitalABC','Bestehen Bewusstseinsstörung oder Atemprobleme?',yesno),
+q('wind','In welche Richtung zieht die Substanz?',[],'text')
+]},
+thl:{title:'🛠️ Technische Hilfeleistung',questions:[
+q('thlArt','Was ist passiert?',['Person hinter verschlossener Tür','Person im Aufzug','Maschinenunfall','Verschüttung/Einsturz','Baum/Objekt auf Person','Stromleitung','Gasleitung','Wasserschaden','Sturmschaden','Sonstiges']),
+q('personenTHL','Sind Personen verletzt oder unmittelbar gefährdet?',yesno),
+q('eingTHL','Ist eine Person eingeklemmt?',yesno),
+q('verschTHL','Ist eine Person verschüttet?',yesno),
+q('schwerTHL','Gibt es schwere Verletzungen?',yesno),
+q('kindTHL','Ist ein Kind betroffen?',yesno),
+q('stromTHL','Besteht Gefahr durch Strom?',yesno),
+q('gasTHL','Besteht Gefahr durch Gas?',yesno),
+q('gefahrTHL','Besteht eine weitere akute Gefahr?',yesno)
+]},
+wasser:{title:'🌊 Wasser- / Eisrettung',questions:[
+q('wasserArt','Was ist passiert?',['Person im Wasser','Ertrinkungsunfall','Tauchunfall','Eiseinbruch','Bootsunfall','Sonstiges']),
+q('sichtbar','Ist die Person an der Oberfläche sichtbar?',yesno),
+q('unterwasser','War oder ist die Person unter Wasser?',yesno),
+q('zeitUnter','Wie lange ungefähr war die Person unter Wasser?',[],'text',a=>a.unterwasser==='Ja'),
+q('atmWasser','Atmet die Person normal?',yesno),
+q('bewWasser','Ist die Person wach und adäquat ansprechbar?',yesno),
+q('mehrereWasser','Sind mehrere Personen betroffen?',yesno),
+q('stroemung','Besteht starke Strömung?',yesno)
+]},
+sturz:{title:'⬇️ Sturz / Höhen- und Tiefenrettung',questions:[
+q('sturzArt','Was ist passiert?',['Sturz aus Höhe','Absturzgefahr','Person hängt im Seil/Gurt','Sturz in Schacht/Tiefe','Sonstiges']),
+q('hoehe','Wie hoch bzw. tief ungefähr?',[],'text'),
+q('mind3','Beträgt die Fallhöhe mindestens etwa 3 Meter?',yesno),
+q('weiterAbsturz','Droht die Person weiter abzurutschen oder abzustürzen?',yesno),
+q('haenge','Hängt die Person frei in einem Seil/Gurt?',yesno),
+q('verletzteSturz','Gibt es Verletzte?',yesno),
+q('bewSturz','Bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmSturz','Keine normale Atmung oder schwere Atemnot?',yesno),
+q('antikoagSturz','Nimmt die verletzte Person Antikoagulanzien/Blutverdünner?',yesno)
+]},
+gewalt:{title:'⚠️ Gewalt / Bedrohung / Verletzung',questions:[
+q('lage','Was ist passiert?',['Körperliche Gewalt','Bedrohung','Stich-/Schnittverletzung','Schussverletzung','Häusliche Gewalt','Amoklage','Geiselnahme','Sonstiges']),
+q('täterDa','Ist der Täter bzw. die Bedrohung noch vor Ort?',yesno),
+q('waffe','Sind Waffen oder gefährliche Gegenstände beteiligt?',yesno),
+q('verletzteGewalt','Sind Personen verletzt?',yesno),
+q('koerperregion','Bei Stich-/Schuss-/Hiebverletzung: welcher Bereich ist betroffen?', ['Kopf','Hals','Rumpf/Thorax/Bauch','Arm/Bein','Mehrere Bereiche','Nicht zutreffend/unklar'], 'choice', a=>['Stich-/Schnittverletzung','Schussverletzung'].includes(a.lage)),
+q('blutungGewalt','Besteht eine schwere Blutung?',yesno),
+q('bewGewalt','Bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmGewalt','Keine normale Atmung oder schwere Atemnot?',yesno),
+q('kinderGewalt','Sind Kinder unmittelbar betroffen oder anwesend?',yesno),
+q('suizid','Besteht ein drohender Suizid?',yesno)
+]},
+vergiftung:{title:'🧪 Vergiftung',questions:[
+q('giftArt','Welche Art von Vergiftung/Exposition?',['Medikamente','Chemikalien','Drogen','Kohlenmonoxid/Rauchgas','Pflanzen/Pilze','Unbekannt','Sonstiges']),
+q('stoffGift','Welcher Stoff und welche Menge?',[],'text'),
+q('zeitGift','Wann war die Aufnahme/Exposition?',[],'text'),
+q('bewGift','Bewusstseinsstörung?',yesno),
+q('atmGift','Keine normale Atmung oder schwere Atemnot?',yesno),
+q('vitalGift','Bestehen Zeichen einer vitalen Gefährdung?',yesno),
+q('kindGift','Ist ein Kind betroffen?',yesno)
+]},
+strom:{title:'⚡ Strom / Blitz',questions:[
+q('stromArt','Was ist passiert?',['Stromunfall','Blitzunfall','Starkstromkontakt','Unklar']),
+q('kontakt','Besteht möglicherweise noch Stromkontakt?',yesno),
+q('bewStrom','Bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmStrom','Keine normale Atmung oder Atemstillstand?',yesno),
+q('verletzteStrom','Gibt es Verbrennungen oder andere Verletzungen?',yesno)
+]},
+geburt:{title:'👶 Geburtshilfe',questions:[
+q('geburtArt','Was ist die Situation?',['Wehen – Geburt noch nicht unmittelbar','Pressdrang','Kind bereits teilweise sichtbar','Kind bereits geboren','Blutung/Komplikation','Unklar']),
+q('pressdrang','Besteht starker Pressdrang?',yesno),
+q('kindSichtbar','Ist das Kind bereits sichtbar?',yesno),
+q('starkeBlutungGeburt','Besteht eine starke Blutung?',yesno),
+q('bewGeburt','Ist die Gebärende bewusstseinsgestört?',yesno),
+q('atmGeburt','Besteht keine normale Atmung oder schwere Atemnot?',yesno)
+]},
+sonstiges:{title:'❓ Sonstiger Einsatz',questions:[
+q('beschreibung','Was ist passiert?',[],'text'),
+q('personenSonst','Sind Personen betroffen?',yesno),
+q('verletzteSonst','Gibt es Verletzte oder Erkrankte?',yesno),
+q('bewSonst','Bewusstlos oder nicht adäquat ansprechbar?',yesno),
+q('atmSonst','Keine normale Atmung oder schwere Atemnot?',yesno),
+q('gefahrSonst','Besteht eine unmittelbare Gefahr?',yesno)
+]}
 };
-let type='',i=0,A={},startTime=0;
-const homeEl=document.getElementById('home'),app=document.getElementById('app');
-function start(t){type=t;i=0;A={};startTime=Date.now();homeEl.classList.add('hidden');app.classList.remove('hidden');title.textContent=C[t].name;render()}
-setInterval(()=>{if(startTime){let s=Math.floor((Date.now()-startTime)/1000);timer.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}},1000);
-function render(){let x=C[type].q[i];counter.textContent='Frage '+(i+1)+' von '+C[type].q.length;bar.style.width=((i+1)/C[type].q.length*100)+'%';box.innerHTML='<h2 class="question">'+x.t+'</h2>'+(x.type==='text'?'<textarea id="txt">'+(A[x.id]||'')+'</textarea><br><button class="primary" onclick="saveText()">Speichern</button>':x.o.map(v=>'<button class="answer" onclick="ans('+JSON.stringify(v)+')">'+v+'</button>').join(''));side()}
-function ans(v){A[C[type].q[i].id]=v;if(i<C[type].q.length-1){i++;render()}else side()}
-function saveText(){A[C[type].q[i].id]=document.getElementById('txt').value;if(i<C[type].q.length-1){i++;render()}else side()}
-function prev(){if(i>0){i--;render()}}
-function naReasons(){let o=[];if(type==='medizin'){if(A.bew==='Bewusstlos / reagiert nicht adäquat')o.push('Bewusstlosigkeit / inadäquate Reaktion auf Ansprache und Rütteln');if(A.bew==='Somnolent / deutlich schläfrig')o.push('Somnolenz mit deutlich beeinträchtigtem Bewusstseinszustand');if(A.bew==='Soporös / nur auf starke Reize')o.push('Sopor – schwere Bewusstseinsstörung');if(A.atm==='Dyspnoe (ausgeprägt/zunehmend)')o.push('Ausgeprägte bzw. zunehmende Dyspnoe');if(A.atm==='Keine normale Atmung')o.push('Keine normale Atmung');if(A.atm==='Atemstillstand')o.push('Atemstillstand');if(A.brust==='Ja')o.push('Akuter Thoraxschmerz');if(A.kreis==='Ausgeprägte/zunehmende Kreislaufinsuffizienz')o.push('Ausgeprägte bzw. zunehmende Kreislaufinsuffizienz');if(A.kreis==='Schockzeichen')o.push('Klinischer Verdacht auf Schock');if(A.kreis==='Kreislaufstillstand')o.push('Kreislaufstillstand');if(A.blut==='Ja')o.push('Schwere Blutung');if(A.schwer==='Ja')o.push('Schwere Verletzung');if(A.neuro==='Ja – akute Lähmung/Sprachstörung')o.push('Akute neurologische Ausfälle, Verdacht auf Schlaganfall')}
-if(type==='brand'&&A.pers==='Ja')o.push('Brand-/Rauchgasereignis mit Personenbeteiligung');
-if(type==='abc'&&A.pers==='Ja')o.push('Chemisches/Gefahrstoffereignis mit Personenbeteiligung');
-if(type==='thl'&&(A.eing==='Ja'||A.was==='Verschüttung'))o.push(A.eing==='Ja'?'Einklemmung':'Verschüttung');
-if(type==='vu'&&(A.eing==='Ja'||(A.schwer==='Ja'&&A.verletzte==='Ja')))o.push(A.eing==='Ja'?'Einklemmung bei Verkehrsunfall':'Schwerer Verkehrsunfall mit Verletzten');
-if(type==='wasser'&&['Person im Wasser','Ertrinkungsunfall','Eisunfall'].includes(A.was))o.push('Wasser-/Ertrinkungsunfall bzw. Eiseinbruch');
-return [...new Set(o)]}
-function crit(){return naReasons()}
-function rec(){let r=[],w=[],add=(x,y)=>{if(!r.includes(x))r.push(x);if(y&&!w.includes(y))w.push(y)};if(type==='medizin')add('🚑 RTW','medizinischer Notfall');if(type==='brand'){add('🚒 Feuerwehr','Brand-/Rauchereignis');if(A.pers==='Ja'||A.verletzte==='Ja')add('🚑 RTW','Personenbeteiligung')}if(type==='vu'){add('🚒 Feuerwehr – Technische Hilfeleistung','Verkehrsunfall');if(A.verletzte==='Ja')add('🚑 RTW','Verletzte')}if(type==='abc'){add('🚒 Feuerwehr – ABC/Gefahrgut','Gefahrstofflage');if(A.pers==='Ja')add('🚑 RTW','Personen betroffen')}if(type==='thl'){add('🚒 Feuerwehr – Technische Hilfeleistung','technische Lage');if(A.pers==='Ja')add('🚑 RTW','Personen betroffen')}if(type==='wasser'){add('🚒 Feuerwehr/Wasserrettung','Wasserunfall');add('🚑 RTW','Personenereignis im Wasser')}if(type==='sonstiges'){if(A.pers==='Ja'||A.verletzte==='Ja')add('🚑 RTW','Personen betroffen');if(A.gefahr==='Ja')add('🚒 Feuerwehr/Gefahrenabwehr','unmittelbare Gefahr')}let n=naReasons();if(n.length){add('🚨 NEF / NOTARZT','Notarztindikation erkannt: '+n.join('; '))}return [r.length?r:['Weitere fachliche Disposition erforderlich'],w,n]}
-function side(){summary.innerHTML=C[type].q.filter(x=>A[x.id]).map(x=>'<div class="item"><span class="label">'+x.t+'</span>'+A[x.id]+'</div>').join('')||'Noch keine Angaben.';let z=crit();critical.innerHTML=z.length?z.map(x=>'• '+x).join('<br>'):'Keine automatisch erkannte Notarztindikation.';let r=rec();resources.innerHTML=r[0].map(x=>'<span class="tag">'+x+'</span>').join('')+(r[2].length?'<div style="margin-top:12px"><b>Begründung für Notarzt:</b><br>'+r[2].map(x=>'• '+x).join('<br>')+'</div>':'')}
-function finish(){let r=rec(),t=C[type].name+'\\n\\nABFRAGEERGEBNIS\\n\\n';C[type].q.forEach(x=>{if(A[x.id])t+=x.t+': '+A[x.id]+'\\n'});t+='\\nEINSATZMITTELVORSCHLAG:\\n'+r[0].join('\\n');if(r[2].length)t+='\\n\\nBEGRÜNDUNG FÜR NOTARZT:\\n'+r[2].map(x=>'• '+x).join('\\n');box.innerHTML='<h2>Abfrage ausgewertet</h2><div class="result">'+t+'</div>'}
-function home(){app.classList.add('hidden');homeEl.classList.remove('hidden');startTime=0}
-</script></body></html>
+
+let type=null, idx=0, A={}, started=0;
+
+function start(t){type=t;idx=0;A={};started=Date.now();home.classList.add('hidden');app.classList.remove('hidden');title.textContent=C[t].title;render()}
+function visibleQuestions(){return C[type].questions.filter(x=>!x.when || x.when(A))}
+function render(){
+ const qs=visibleQuestions(); if(idx>=qs.length)idx=qs.length-1; const x=qs[idx];
+ counter.textContent=`Frage ${idx+1} von ${qs.length}`; bar.style.width=`${((idx+1)/qs.length)*100}%`;
+ let h=`<h2 class="question">${esc(x.text)}</h2>${x.help?`<p class="help">${esc(x.help)}</p>`:''}`;
+ if(x.type==='text') h+=`<textarea id="free" placeholder="Angabe eingeben...">${esc(A[x.id]||'')}</textarea><button class="primary" style="margin-top:12px" onclick="saveText()">Antwort speichern</button>`;
+ else h+=x.options.map((v,n)=>`<button class="answer" data-answer-index="${n}">${esc(v)}</button>`).join('');
+ questionBox.innerHTML=h;
+ if(x.type!=='text'){
+   questionBox.querySelectorAll('.answer').forEach((btn,n)=>{
+     btn.addEventListener('click',()=>{
+       answer(x.options[n]);
+     });
+   });
+ }
+ prevBtn.disabled=idx===0; side();
+}
+function answer(v){
+ const current=visibleQuestions();
+ const x=current[idx];
+ if(!x)return;
+ A[x.id]=v;
+ // Nach jeder Auswahl sofort automatisch zur nächsten sichtbaren Frage.
+ const qs=visibleQuestions();
+ if(idx < qs.length-1){
+   idx++;
+   render();
+ }else{
+   // Bei der letzten Frage bleibt die Auswertung sichtbar.
+   side();
+ }
+}
+function saveText(){const x=visibleQuestions()[idx];A[x.id]=document.getElementById('free').value.trim();const qs=visibleQuestions();if(idx<qs.length-1){idx++;render()}else side()}
+function previous(){if(idx>0){idx--;render()}}
+function goHome(){app.classList.add('hidden');home.classList.remove('hidden');started=0}
+
+function includesAny(v, arr){return arr.includes(v)}
+function naReasons(){
+ const r=[];
+ const add=x=>{if(!r.includes(x))r.push(x)};
+ // Patientenzustand / Vitalfunktionen
+ if(A.bewusstsein==='Bewusstlos – keine adäquate Reaktion auf Ansprache und Rütteln')add('Bewusstsein: bewusstlos bzw. keine adäquate Reaktion auf Ansprechen und Rütteln');
+ if(A.bewusstsein==='Soporös – Reaktion nur auf starke Reize')add('Schwere Bewusstseinsstörung: Sopor');
+ if(A.atmung==='Ausgeprägte bzw. zunehmende Dyspnoe')add('Atmung: ausgeprägte bzw. zunehmende Dyspnoe');
+ if(A.atmung==='Keine normale Atmung')add('Atmung: keine normale Atmung');
+ if(A.atmung==='Atemstillstand')add('Atmung: Atemstillstand');
+ if(A.kreislauf==='Ausgeprägte bzw. zunehmende Kreislaufinsuffizienz')add('Herz/Kreislauf: ausgeprägte bzw. zunehmende Kreislaufinsuffizienz');
+ if(A.kreislauf==='Schockzeichen')add('Herz/Kreislauf: Schockzeichen');
+ if(A.kreislauf==='Kreislaufstillstand')add('Herz/Kreislauf: Kreislaufstillstand');
+ if(A.brust==='Ja')add('Herz/Kreislauf: akuter Thoraxschmerz');
+ if(A.blutung==='Ja')add('Schwere Schädigung: schwere Blutung');
+ if(A.schmerz==='Ja')add('Schwere Schädigung: starke akute Schmerzen');
+ if(A.schaedigung==='Ja')add('Schwere Schädigung: schwere Verletzung');
+ if(A.neuro==='Ja')add('Neurologie: akute Lähmungen/Sprachstörung, Verdacht auf Schlaganfall');
+ // medizinische Ereignisse
+ if(A.hauptproblem==='Vergiftung' && (A.vitalGift==='Ja'||A.atmung==='Keine normale Atmung'||A.atmung==='Atemstillstand'))add('Vergiftung mit Hinweis auf vitale Gefährdung');
+ if(A.geburtAkut==='Ja')add('Notfallbezogene Indikation: unmittelbar einsetzende Geburt');
+ // Verkehr
+ if(A.schwerVU==='Ja' && A.verletzte==='Ja')add('Notfallbezogene Indikation: schwerer Verkehrsunfall mit Hinweis auf Verletzte');
+ if(A.eingeklemmt==='Ja')add('Notfallbezogene Indikation: Einklemmung');
+ if(A.kindVU==='Ja' && A.verletzte==='Ja')add('Notfallbezogene Indikation: Unfall mit Kind');
+ if(A.bewVU==='Ja')add('Bewusstseinsstörung nach Verkehrsunfall');
+ if(A.atmVU==='Ja')add('Schwere Atem-/Vitalbeeinträchtigung nach Verkehrsunfall');
+ if(A.blutVU==='Ja')add('Schwere Blutung nach Verkehrsunfall');
+ // Brand / ABC
+ if(A.personenBrand==='Ja')add('Notfallbezogene Indikation: Brand/Rauchgasentwicklung mit Hinweis auf Personenbeteiligung');
+ if(A.explosion==='Ja')add('Notfallbezogene Indikation: Explosionsunfall mit Hinweis auf Personenbeteiligung');
+ if(A.personenABC==='Ja' && A.abcArt) add('Thermisches/chemisches bzw. Gefahrstoffereignis mit Personenbeteiligung');
+ if(A.vitalABC==='Ja')add('Gefahrstoffereignis mit Hinweis auf Beeinträchtigung der Vitalfunktionen');
+ // THL
+ if(A.eingTHL==='Ja')add('Notfallbezogene Indikation: Einklemmung');
+ if(A.verschTHL==='Ja')add('Notfallbezogene Indikation: Verschüttung');
+ if(A.schwerTHL==='Ja')add('Sonstiger Unfall mit Schwerverletzten');
+ if(A.kindTHL==='Ja' && A.personenTHL==='Ja')add('Unfall mit Kind');
+ // Wasser
+ if(['Ertrinkungsunfall','Tauchunfall','Eiseinbruch'].includes(A.wasserArt))add('Notfallbezogene Indikation: Ertrinkungs-/Tauchunfall oder Eiseinbruch');
+ if(A.atmWasser==='Nein')add('Atmung nach Wasserereignis nicht normal');
+ if(A.bewWasser==='Nein')add('Bewusstseinsstörung nach Wasserereignis');
+ // Höhe
+ if(A.mind3==='Ja')add('Notfallbezogene Indikation: Sturz aus Höhe von mindestens etwa 3 m');
+ if(A.verletzteSturz==='Ja' && A.mind3==='Unklar')add('Sturzereignis mit Verletzten – Schwere nicht sicher beurteilbar');
+ if(A.bewSturz==='Ja')add('Bewusstseinsstörung nach Sturz');
+ if(A.atmSturz==='Ja')add('Schwere Atem-/Vitalbeeinträchtigung nach Sturz');
+ // Gewalt
+ if(['Stich-/Schnittverletzung','Schussverletzung'].includes(A.lage) && ['Kopf','Hals','Rumpf/Thorax/Bauch','Mehrere Bereiche'].includes(A.koerperregion))add('Notfallbezogene Indikation: Schuss-/Stich-/Hiebverletzung im Kopf-, Hals- oder Rumpfbereich');
+ if(A.suizid==='Ja')add('Notfallbezogene Indikation: drohender Suizid');
+ if(['Amoklage','Geiselnahme'].includes(A.lage))add('Notfallbezogene Indikation: Amoklage/Geiselnahme bzw. unmittelbare Gefahr für Menschenleben');
+ if(A.blutungGewalt==='Ja')add('Schwere Blutung');
+ if(A.bewGewalt==='Ja')add('Bewusstseinsstörung');
+ if(A.atmGewalt==='Ja')add('Schwere Atem-/Vitalbeeinträchtigung');
+ // poisoning
+ if(A.vitalGift==='Ja')add('Notfallbezogene Indikation: Vergiftung mit vitaler Gefährdung');
+ if(A.bewGift==='Ja')add('Bewusstseinsstörung bei Vergiftung');
+ if(A.atmGift==='Ja')add('Schwere Atem-/Vitalbeeinträchtigung bei Vergiftung');
+ // electricity
+ if(['Stromunfall','Blitzunfall','Starkstromkontakt'].includes(A.stromArt))add('Notfallbezogene Indikation: Strom- oder Blitzunfall');
+ if(A.bewStrom==='Ja')add('Bewusstseinsstörung nach Strom-/Blitzereignis');
+ if(A.atmStrom==='Ja')add('Keine normale Atmung/Atemstillstand nach Strom-/Blitzereignis');
+ // birth
+ if(A.geburtArt==='Pressdrang'||A.kindSichtbar==='Ja'||A.geburtArt==='Kind bereits teilweise sichtbar')add('Notfallbezogene Indikation: unmittelbar einsetzende Geburt');
+ if(A.starkeBlutungGeburt==='Ja')add('Schwere Blutung im Zusammenhang mit Geburt');
+ if(A.bewGeburt==='Ja'||A.atmGeburt==='Ja')add('Beeinträchtigung der Vitalfunktionen bei Geburtshilfe');
+ // general
+ if(A.bewSonst==='Ja')add('Bewusstseinsstörung');
+ if(A.atmSonst==='Ja')add('Keine normale Atmung oder schwere Atemnot');
+ return r;
+}
+
+function resources(){
+ const r=[], why=[];
+ const add=(x,w)=>{if(!r.includes(x))r.push(x);if(w&&!why.includes(w))why.push(w)};
+ if(type==='medizin'){add('🚑 RTW','medizinischer Notfall')}
+ if(type==='vu'){add('🚒 Feuerwehr – Technische Hilfeleistung','Verkehrsunfall'); if(A.verletzte==='Ja')add('🚑 RTW','Verletzte'); if(A.ggVU==='Ja'||A.austrittVU==='Ja')add('☣️ Feuerwehr – ABC/Gefahrgut','Gefahrstoff-/Austrittslage')}
+ if(type==='brand'){add('🚒 Feuerwehr – Brandbekämpfung','Brand/Rauch');if(A.personenBrand==='Ja'||A.verletzteBrand==='Ja')add('🚑 RTW','Personenbeteiligung')}
+ if(type==='abc'){add('☣️ Feuerwehr – ABC/Gefahrgut','Gefahrstofflage');if(A.personenABC==='Ja')add('🚑 RTW','betroffene Personen')}
+ if(type==='thl'){add('🚒 Feuerwehr – Technische Hilfeleistung','technische Lage');if(A.personenTHL==='Ja')add('🚑 RTW','Personen betroffen')}
+ if(type==='wasser'){add('🌊 Wasserrettung/Feuerwehr','Wasser-/Eisereignis');add('🚑 RTW','Personenereignis')}
+ if(type==='sturz'){add('🚒 Feuerwehr – Technische Hilfeleistung/Höhenrettung nach örtlicher AAO','Sturz-/Höhenlage');if(A.verletzteSturz==='Ja')add('🚑 RTW','Verletzte')}
+ if(type==='gewalt'){add('👮 Polizei','Gewalt-/Bedrohungslage');if(A.verletzteGewalt==='Ja')add('🚑 RTW','Verletzte')}
+ if(type==='vergiftung'){add('🚑 RTW','Vergiftung/Exposition');if(['Chemikalien','Kohlenmonoxid/Rauchgas'].includes(A.giftArt))add('🚒 Feuerwehr – ABC/Gefahrgut','Gefahrstoff-/Expositionslage')}
+ if(type==='strom'){add('🚒 Feuerwehr','Strom-/Blitzereignis');add('🚑 RTW','Patientenereignis')}
+ if(type==='geburt'){add('🚑 RTW','Geburtshilfe')}
+ if(type==='sonstiges'){if(A.personenSonst==='Ja'||A.verletzteSonst==='Ja')add('🚑 RTW','Personen betroffen');if(A.gefahrSonst==='Ja')add('🚒 Feuerwehr/Gefahrenabwehr','unmittelbare Gefahr')}
+ const na=naReasons(); if(na.length)add('🚨 NEF / NOTARZT',na.join('; '));
+ if(!r.length)add('Weitere fachliche Disposition erforderlich','keine ausreichende automatische Zuordnung');
+ return {r,why,na};
+}
+function side(){
+ const qs=C[type].questions;
+ summary.innerHTML=qs.filter(x=>A[x.id]).map(x=>`<div class="item"><span class="label">${esc(x.text)}</span>${esc(A[x.id])}</div>`).join('')||'Noch keine Angaben.';
+ const na=naReasons(); critical.innerHTML=na.length?na.map(x=>'• '+esc(x)).join('<br>'):'Keine automatisch erkannte Notarztindikation.';
+ const z=resources();
+ resourcesEl.innerHTML=z.r.map(x=>`<span class="tag">${esc(x)}</span>`).join('')+(z.na.length?`<div style="margin-top:12px"><b>Begründung für Notarzt:</b><div>${z.na.map(x=>`<div class="reason">• ${esc(x)}</div>`).join('')}</div></div>`:'');
+}
+function finish(){
+ const z=resources(), lines=[C[type].title,'','ABFRAGEERGEBNIS',''];
+ C[type].questions.forEach(x=>{if(A[x.id])lines.push(x.text+': '+A[x.id])});
+ lines.push('','EINSATZMITTELVORSCHLAG:');z.r.forEach(x=>lines.push(x));
+ if(z.na.length){lines.push('','BEGRÜNDUNG FÜR NOTARZT:');z.na.forEach(x=>lines.push('• '+x))}
+ else lines.push('','Keine hinterlegte automatische Notarztindikation erkannt.');
+ lines.push('','Hinweis: Automatisierte Entscheidungshilfe. Örtliche AAO, Leitstellen-SOP und fachliche Freigaben bleiben maßgeblich.');
+ questionBox.innerHTML='<h2>Abfrage ausgewertet</h2><div class="result">'+esc(lines.join('\n'))+'</div>';bar.style.width='100%';
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+setInterval(()=>{if(started){let s=Math.floor((Date.now()-started)/1000);timer.textContent='⏱ '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}},1000);
+</script>
+</body></html>
