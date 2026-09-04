@@ -84,7 +84,15 @@ async function initFirebase(){
     fb=initializeApp(firebaseConfig); db=getDatabase(fb); auth=getAuth(fb);
     onAuthStateChanged(auth, async u=>{
       user=u;
-      $("logoutBtn").hidden=!isAdmin();
+      const admin = isAdmin();
+      $("logoutBtn").hidden = !admin;
+
+      // Wenn bereits ein Administrator angemeldet ist (z. B. nach einem Seiten-Reload),
+      // darf niemals ein altes Login-Fenster darüber liegen bleiben.
+      if(admin){
+        $("loginModal").hidden = true;
+      }
+
       if(!u){
         try{ await signInAnonymously(auth); }
         catch(e){ console.warn(e); setStatus("⚠️ Firebase verbunden – anonyme Anmeldung muss in Firebase aktiviert werden"); }
@@ -260,9 +268,22 @@ document.querySelectorAll(".category").forEach(b=>b.onclick=()=>start(b.dataset.
 $("backHome").onclick=()=>{ $("call").hidden=true; $("home").hidden=false; };
 $("previousBtn").onclick=()=>{ currentIndex--; renderQuestion(); };
 $("finishBtn").onclick=finish;
-$("adminBtn").onclick=()=>{ if(isAdmin()){ $("home").hidden=true; $("call").hidden=true; $("admin").hidden=false; } else $("loginModal").hidden=false; };
+$("adminBtn").onclick=()=>{
+  if(isAdmin()){
+    $("loginModal").hidden = true;
+    $("home").hidden = true;
+    $("call").hidden = true;
+    $("admin").hidden = false;
+  } else {
+    $("loginError").textContent = "";
+    $("loginModal").hidden = false;
+  }
+};
 $("closeAdmin").onclick=()=>{ $("admin").hidden=true; $("home").hidden=false; };
-$("cancelLogin").onclick=()=>$("loginModal").hidden=true;
+$("cancelLogin").onclick=()=>{
+  $("loginError").textContent = "";
+  $("loginModal").hidden = true;
+};
 $("doLogin").onclick=async()=>{
   try{
     $("loginError").textContent="";

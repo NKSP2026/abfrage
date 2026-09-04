@@ -19,3 +19,8 @@ textarea{min-height:110px;resize:vertical}label{display:block;font-weight:700}.f
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.72);display:grid;place-items:center;z-index:20;padding:20px}.modal{background:#1b222d;border:1px solid #394353;border-radius:16px;padding:22px;width:min(430px,100%)}.modal input{margin-bottom:10px}.error{color:#ff9b9b;margin-top:12px}
 .suggestions{display:grid;gap:8px;margin-top:8px}.suggestion-btn{background:#334155;text-align:left;padding:9px 12px;font-size:.92rem}
 @media(max-width:620px){.top{padding:14px}.top-actions{display:flex;flex-direction:column;gap:6px}.container{padding:14px}.category-grid{grid-template-columns:1fr}.category{min-height:72px}}
+
+/* Wichtig: versteckte Bereiche dürfen nicht durch display:grid wieder sichtbar werden */
+[hidden] {
+  display: none !important;
+}
