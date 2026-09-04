@@ -1,9 +1,21 @@
 {
   "rules": {
-    "catalog": { ".read": true, ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'" },
-    "notarzt_rules": { ".read": true, ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'" },
-    "resource_rules": { ".read": true, ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'" },
-    "suggestions": { ".read": true, ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'" },
+    "catalog": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'"
+    },
+    "notarzt_rules": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'"
+    },
+    "resource_rules": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'"
+    },
+    "suggestions": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'HIER_DEINE_ADMIN_UID_EINFUEGEN'"
+    },
     "call_history": {
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",

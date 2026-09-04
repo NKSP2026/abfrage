@@ -1,21 +1,156 @@
 <!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Einsatzabfrage</title><link rel="stylesheet" href="style.css"></head><body>
-<header><h1>📞 Einsatzabfrage</h1><span id="status">Firebase wird verbunden …</span><button id="login">🔐 Verwaltung</button><button id="logout" hidden>Abmelden</button></header>
-<main>
-<section id="home"><h2>Was ist passiert?</h2><div id="cats" class="grid"></div>
-<section id="admin" hidden><h2>⚙️ Verwaltung</h2>
-<button id="seed">🌱 Grunddaten in Firebase schreiben</button>
-<div class="tabs">
-<button data-tab="q">Neue Frage</button><button data-tab="n">Notarztregel</button><button data-tab="r">Einsatzmittelregel</button><button data-tab="s">Vorschlag</button></div>
-<div id="tab-q" class="tab"><label>Kategorie<select id="qc"></select></label><label>Frage-ID<input id="qid"></label><label>Frage<input id="qt"></label><label>Typ<select id="qtype"><option value="choice">Auswahl</option><option value="text">Freitext</option><option value="number">Zahl</option></select></label><label>Antworten, je Zeile<textarea id="qo"></textarea></label><label>Folgebedingung: Frage-ID<input id="wq"></label><label>Antwort muss sein<input id="wv"></label><label>Reihenfolge<input id="order" type="number" value="100"></label><label>Vorschlagsgruppe<input id="sg"></label><button id="saveq">💾 Frage speichern</button></div>
-<div id="tab-n" class="tab" hidden><label>Regel-ID<input id="nid"></label><label>Kategorie<select id="nc"></select></label><label>Frage-ID<input id="nq"></label><label>Antwortwert<input id="nv"></label><label>Begründung<input id="nr"></label><button id="saven">💾 Notarztregel speichern</button></div>
-<div id="tab-r" class="tab" hidden><label>Regel-ID<input id="rid"></label><label>Kategorie<select id="rc"></select></label><label>Frage-ID<input id="rq"></label><label>Antwortwert<input id="rv"></label><label>Einsatzmittel, je Zeile<textarea id="rr"></textarea></label><button id="saver">💾 Einsatzmittelregel speichern</button></div>
-<div id="tab-s" class="tab" hidden><label>Gruppe<input id="sgrp" placeholder="z. B. vorerkrankungen"></label><label>Vorschlag<input id="stxt"></label><button id="saves">💾 Vorschlag speichern</button></div>
-</section></section>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Einsatzabfrage</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>📞 Einsatzabfrage</h1>
+    <div id="status">Wird geladen …</div>
+  </div>
+  <div class="top-actions">
+    <button id="adminBtn" class="secondary">🔐 Verwaltung</button>
+    <button id="logoutBtn" class="secondary" hidden>Abmelden</button>
+  </div>
+</header>
 
-<section id="call" hidden><button id="back">← Startseite</button><h2 id="title"></h2><div id="question" class="panel"></div><div><button id="prev">← Zurück</button><button id="finish">Auswertung abschließen</button></div>
-<div class="columns"><div class="panel"><h3>📋 Antworten</h3><div id="answers"></div></div><div class="panel red"><h3>⚠️ Notarztindikationen</h3><div id="na"></div></div><div class="panel green"><h3>🚒🚑 Einsatzmittel</h3><div id="res"></div></div></div></section>
+<main class="container">
+  <section id="home">
+    <h2>Was ist passiert?</h2>
+    <p class="hint">Bitte wähle das Einsatzthema aus.</p>
+
+    <div class="category-grid">
+      <button class="category" data-category="brand">🔥 <span>Brand / Rauchentwicklung</span></button>
+      <button class="category" data-category="medizin">🚑 <span>Medizinischer Notfall</span></button>
+      <button class="category" data-category="vu">🚗 <span>Verkehrsunfall</span></button>
+      <button class="category" data-category="abc">☣️ <span>ABC / Gefahrgut</span></button>
+      <button class="category" data-category="thl">🛠️ <span>Technische Hilfeleistung</span></button>
+      <button class="category" data-category="wasser">🌊 <span>Wasser / Eis</span></button>
+      <button class="category" data-category="sturz">⬇️ <span>Sturz / Höhe / Tiefe</span></button>
+      <button class="category" data-category="gewalt">⚠️ <span>Gewalt / Bedrohung</span></button>
+      <button class="category" data-category="vergiftung">🧪 <span>Vergiftung</span></button>
+      <button class="category" data-category="strom">⚡ <span>Strom / Elektrische Gefährdung</span></button>
+      <button class="category" data-category="geburt">👶 <span>Geburtshilfe</span></button>
+      <button class="category" data-category="sonst">❓ <span>Sonstiger Einsatz</span></button>
+    </div>
+  </section>
+
+  <section id="call" hidden>
+    <button id="backHome" class="secondary">← Startseite</button>
+    <h2 id="categoryTitle"></h2>
+
+    <div id="progress" class="progress"></div>
+
+    <article class="card question-card">
+      <div id="questionText" class="question-text"></div>
+      <div id="answerArea"></div>
+      <div class="nav-row">
+        <button id="previousBtn" class="secondary">← Zurück</button>
+        <button id="finishBtn">Auswertung abschließen</button>
+      </div>
+    </article>
+
+    <div class="result-grid">
+      <article class="card">
+        <h3>📋 Antworten</h3>
+        <div id="answerSummary"></div>
+      </article>
+      <article class="card warning">
+        <h3>⚕️ Notarztindikationen</h3>
+        <div id="notarztSummary">Noch keine Auswertung.</div>
+      </article>
+      <article class="card success">
+        <h3>🚒🚑 Einsatzmittelvorschlag</h3>
+        <div id="resourceSummary">Noch keine Auswertung.</div>
+      </article>
+    </div>
+  </section>
+
+  <section id="admin" hidden>
+    <div class="admin-head">
+      <h2>⚙️ Verwaltung</h2>
+      <button id="closeAdmin" class="secondary">Schließen</button>
+    </div>
+
+    <p class="hint">Hier kannst du Fragen, Folgefragen, Regeln und Textvorschläge in Firebase speichern.</p>
+
+    <div class="card">
+      <h3>Grunddaten</h3>
+      <p>Schreibt die mitgelieferten Startfragen und Startregeln in Firebase. Bereits vorhandene gleichnamige Einträge werden überschrieben.</p>
+      <button id="seedBtn">🌱 Grunddaten in Firebase speichern</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="questionTab">Neue Frage</button>
+      <button class="tab-btn" data-tab="notarztTab">Notarztregel</button>
+      <button class="tab-btn" data-tab="resourceTab">Einsatzmittelregel</button>
+      <button class="tab-btn" data-tab="suggestionTab">Textvorschlag</button>
+    </div>
+
+    <div id="questionTab" class="tab-content">
+      <div class="form-grid">
+        <label>Kategorie<select id="qCategory"></select></label>
+        <label>Frage-ID<input id="qId" placeholder="z. B. atmung"></label>
+        <label>Frage<input id="qText" placeholder="Wie ist die Atmung?"></label>
+        <label>Fragetyp<select id="qType"><option value="choice">Auswahl</option><option value="text">Freitext</option><option value="number">Zahl</option></select></label>
+        <label>Antwortmöglichkeiten (eine pro Zeile)<textarea id="qOptions"></textarea></label>
+        <label>Folge nur nach Frage-ID<input id="qWhenQuestion" placeholder="optional"></label>
+        <label>… wenn Antwort lautet<input id="qWhenValue" placeholder="optional"></label>
+        <label>Reihenfolge<input id="qOrder" type="number" value="100"></label>
+        <label>Vorschlagsgruppe für Freitext<input id="qSuggestionGroup" placeholder="z. B. vorerkrankungen"></label>
+      </div>
+      <button id="saveQuestion">💾 Frage speichern</button>
+    </div>
+
+    <div id="notarztTab" class="tab-content" hidden>
+      <div class="form-grid">
+        <label>Regel-ID<input id="nId" placeholder="z. B. bewusstlos"></label>
+        <label>Kategorie<select id="nCategory"></select></label>
+        <label>Frage-ID<input id="nQuestion"></label>
+        <label>Antwortwert<input id="nValue"></label>
+        <label>Fachliche Begründung<input id="nReason"></label>
+      </div>
+      <button id="saveNotarzt">💾 Notarztregel speichern</button>
+    </div>
+
+    <div id="resourceTab" class="tab-content" hidden>
+      <div class="form-grid">
+        <label>Regel-ID<input id="rId"></label>
+        <label>Kategorie<select id="rCategory"></select></label>
+        <label>Frage-ID<input id="rQuestion"></label>
+        <label>Antwortwert<input id="rValue"></label>
+        <label>Einsatzmittel (eine pro Zeile)<textarea id="rResources"></textarea></label>
+      </div>
+      <button id="saveResource">💾 Einsatzmittelregel speichern</button>
+    </div>
+
+    <div id="suggestionTab" class="tab-content" hidden>
+      <div class="form-grid">
+        <label>Gruppe<input id="sGroup" placeholder="z. B. vorerkrankungen"></label>
+        <label>Vorschlag<input id="sText" placeholder="z. B. Diabetes mellitus"></label>
+      </div>
+      <button id="saveSuggestion">💾 Vorschlag speichern</button>
+    </div>
+  </section>
 </main>
-<div id="modal" hidden><div class="modal"><h2>Anmelden</h2><input id="email" type="email" placeholder="E-Mail"><input id="pw" type="password" placeholder="Passwort"><button id="dologin">Anmelden</button><button id="cancel">Abbrechen</button><p id="err"></p></div></div>
-<script type="module" src="app.js"></script></body></html>
+
+<div id="loginModal" class="modal-backdrop" hidden>
+  <div class="modal">
+    <h2>Verwaltung anmelden</h2>
+    <input id="loginEmail" type="email" placeholder="E-Mail">
+    <input id="loginPassword" type="password" placeholder="Passwort">
+    <div class="nav-row">
+      <button id="doLogin">Anmelden</button>
+      <button id="cancelLogin" class="secondary">Abbrechen</button>
+    </div>
+    <div id="loginError" class="error"></div>
+  </div>
+</div>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

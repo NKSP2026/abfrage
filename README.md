@@ -1,46 +1,51 @@
-# Einsatzabfrage mit GitHub + Firebase Realtime Database
+# Einsatzabfrage – GitHub + Firebase
 
-## 1. Firebase Web-App konfigurieren
-Firebase -> Zahnrad -> Projekteinstellungen -> Deine Apps -> Web-App.
+## Dateien
+- `index.html` – Startseite mit Brand, Medizin, VU, ABC, THL usw.
+- `style.css` – Darstellung
+- `app.js` – Abfrage, Folgefragen, Auswertung und Firebase
+- `firebase-config.js` – Firebase-Verbindung und ADMIN_UID
+- `database.rules.json` – Realtime-Database-Regeln
 
-Die komplette Web-Konfiguration in `firebase-config.js` eintragen.
+## Normale Nutzung: KEINE sichtbare Anmeldung
+Beim Öffnen der GitHub-Pages-Seite erscheinen sofort die Einsatzkategorien.
 
-Die Datenbank-URL ist bereits gesetzt:
-`https://abfrage-50be7-default-rtdb.firebaseio.com`
+Für die Speicherung einer Abfrage wird Firebase Anonymous Authentication im Hintergrund verwendet. Der Nutzer sieht keine Anmeldung.
 
-## 2. Anmeldung aktivieren
-Firebase -> Authentication -> Sign-in method -> E-Mail/Passwort aktivieren.
-Unter Users einen Benutzer für dich erstellen.
+In Firebase aktivieren:
+Authentication -> Sign-in method -> Anonymous -> Aktivieren
 
-Kopiere dessen UID nach:
-- `firebase-config.js` bei `ADMIN_UID`
-- `database.rules.json` an allen Stellen mit `HIER_DEINE_ADMIN_UID_EINFUEGEN`
+## Verwaltung
+Nur die Schaltfläche `🔐 Verwaltung` benötigt eine Anmeldung.
 
-## 3. Datenbankregeln
-Firebase -> Realtime Database -> Rules.
-Den Inhalt von `database.rules.json` einfügen, vorher die UID ersetzen.
+1. Firebase Authentication -> E-Mail/Passwort aktivieren.
+2. Deinen Administrator-Benutzer anlegen.
+3. Die UID dieses Benutzers in `firebase-config.js` bei `ADMIN_UID` eintragen.
+4. Dieselbe UID in `database.rules.json` ersetzen.
+5. Den Inhalt von `database.rules.json` in Firebase Realtime Database -> Rules einfügen und veröffentlichen.
 
-## 4. GitHub
-Diese Dateien in dein Repository hochladen:
-- index.html
-- style.css
-- app.js
-- firebase-config.js
+## Firebase-Konfiguration
+In Firebase:
+Projekteinstellungen -> Deine Apps -> Web-App -> SDK-Konfiguration
 
-Repository -> Settings -> Pages -> Deploy from branch -> main -> /(root).
+Die Werte nach `firebaseConfig` in `firebase-config.js` eintragen.
 
-## 5. Erste Daten
-Auf der Webseite als Administrator anmelden.
-Dann erscheint die Verwaltung.
-Auf `Grunddaten in Firebase schreiben` klicken.
+## GitHub Pages
+Alle Dateien in dein Repository hochladen.
 
-Danach werden Fragen, Notarztregeln, Einsatzmittelregeln und Vorschläge aus der Realtime Database geladen.
+Repository -> Settings -> Pages
+- Source: Deploy from a branch
+- Branch: main
+- Folder: /(root)
 
-## Datenstruktur
-/catalog/<Kategorie>/questions/<Frage-ID>
-/notarzt_rules/<Regel-ID>
-/resource_rules/<Regel-ID>
-/suggestions/<Gruppe>/<ID>
-/call_history/<UID>/<Abfrage-ID>
+Danach die angezeigte GitHub-Pages-Adresse öffnen.
 
-Wichtig: Die mitgelieferten medizinischen und taktischen Regeln sind technische Startbeispiele und kein vollständiger oder verbindlicher Leitstellen-/Notarztindikationskatalog. Vor realem Einsatz müssen sie durch die zuständigen fachlichen Stellen validiert werden.
+## Firebase-Datenstruktur
+- `/catalog/<kategorie>/<frage>`
+- `/notarzt_rules/<regel>`
+- `/resource_rules/<regel>`
+- `/suggestions/<gruppe>`
+- `/call_history/<anonyme-UID>/<abfrage>`
+
+## Hinweis
+Die enthaltenen medizinischen Fragen und Regeln sind technische Startdaten für die Anwendung. Sie sind kein vollständiger oder verbindlicher Leitstellen-Standard, kein offizieller Notarztindikationskatalog und kein Ersatz für lokal freigegebene Dispositionsrichtlinien. Für reale Notrufdisposition müssen Fragen, Indikationen und Einsatzmittelregeln durch die zuständige fachliche und organisatorische Stelle geprüft und freigegeben werden.
