@@ -191,7 +191,33 @@ async function loadFirebase(){
 }
 
 function questionsFor(category){
-  const raw=Object.values(data.catalog?.[category] || {});
+  let raw=Object.values(data.catalog?.[category] || {});
+
+  /*
+    In älteren Firebase-Katalogen können noch Fragen wie
+    „Was sind die Beschwerden?“ gespeichert sein. Zusammen mit der neuen
+    Standardfrage „Was ist gerade passiert bzw. was ist das Hauptproblem?“
+    würde dieselbe Information doppelt abgefragt.
+
+    Bei medizinischen Abfragen behalten wir deshalb nur EINE Frage zur
+    aktuellen Hauptbeschwerde/Hauptproblem. Die aktuelle Standardfrage
+    „problem“ hat dabei Vorrang.
+  */
+  if(category === "medizin"){
+    const mainProblem = q => {
+      const id=String(q?.id||"").toLowerCase();
+      const text=String(q?.text||"").toLowerCase();
+      if(["problem","hauptproblem","beschwerden","beschwerde","symptome","was"].includes(id)) return true;
+      return /(?:haupt(?:problem|beschwer)|was (?:ist|sind).*(?:problem|beschwer)|welche.*beschwer|aktuelle.*beschwer)/i.test(text);
+    };
+
+    const candidates=raw.filter(mainProblem);
+    if(candidates.length > 1){
+      const keep=candidates.find(q=>q.id==="problem") || candidates[0];
+      raw=raw.filter(q=>!mainProblem(q) || q===keep);
+    }
+  }
+
   if(raw.length) return raw.sort((a,b)=>(a.order||999)-(b.order||999));
 
   return Object.values(defaults.catalog?.[category] || {
@@ -560,6 +586,107 @@ function renderSummary(){
     : "Noch keine Antworten.";
 }
 
+function escHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function openPdfPrint(){
+  // Druckansicht mit allen Fragen, Antworten und dem kurzen Einsatztext.
+  // Im Android-/Browser-Druckdialog kann anschließend "Als PDF speichern" gewählt werden.
+  evaluate();
+
+  const title=(categories.find(x=>x[0]===currentCategory)?.[1]||currentCategory||"Einsatz")
+    .replace(/^[^A-Za-zÄÖÜäöü0-9]+\s*/, "");
+  const now=new Date().toLocaleString("de-DE");
+
+  const rows=currentQuestions
+    .filter(q=>answers[q.id] !== undefined && answers[q.id] !== "")
+    .map(q=>`<tr><th>${escHtml(q.text)}</th><td>${escHtml(answers[q.id])}</td></tr>`)
+    .join("");
+
+  const ageRow=answers.alter
+    ? `<tr><th>Alter (automatisch aus Geburtsdatum)</th><td>${escHtml(answers.alter)}</td></tr>`
+    : "";
+
+  const dispatch=$("dispatchText")?.textContent || "";
+  const notarzt=$("notarztSummary")?.innerText || "";
+  const resources=$("resourceSummary")?.innerText || "";
+
+  const win=window.open("", "_blank");
+  if(!win){
+    alert("Das PDF-Fenster konnte nicht geöffnet werden. Bitte Pop-ups für diese Seite erlauben.");
+    return;
+  }
+
+  win.document.open();
+  win.document.write(`<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Einsatzabfrage – ${escHtml(title)}</title>
+<style>
+  @page { size: A4; margin: 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#111; line-height:1.35; }
+  h1 { margin:0 0 4px; font-size:24px; }
+  h2 { margin:22px 0 8px; font-size:18px; border-bottom:1px solid #bbb; padding-bottom:5px; }
+  .meta { color:#555; margin-bottom:16px; }
+  table { width:100%; border-collapse:collapse; }
+  th,td { border:1px solid #bbb; padding:8px; vertical-align:top; text-align:left; }
+  th { width:45%; background:#f3f3f3; }
+  .box { border:1px solid #999; padding:12px; white-space:pre-wrap; margin-top:8px; }
+  .dispatch { font-size:16px; font-weight:bold; }
+  .hint { margin-top:20px; color:#666; font-size:12px; }
+</style>
+</head>
+<body>
+  <h1>Einsatzabfrage – ${escHtml(title)}</h1>
+  <div class="meta">Erstellt am: ${escHtml(now)}</div>
+
+  <h2>Fragen und Antworten</h2>
+  <table><tbody>${rows}${ageRow}</tbody></table>
+
+  <h2>Notarzt-/NEF-Bewertung</h2>
+  <div class="box">${escHtml(notarzt)}</div>
+
+  <h2>Einsatzmittelvorschlag</h2>
+  <div class="box">${escHtml(resources)}</div>
+
+  <h2>Einsatztext</h2>
+  <div class="box dispatch">${escHtml(dispatch)}</div>
+
+  <div class="hint">Diese Auswertung dient als Dokumentation und Einsatzunterstützung.</div>
+</body>
+</html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(()=>win.print(),300);
+}
+
+function returnToHome(){
+  finishing=false;
+  reaActive=false;
+  currentCategory=null;
+  currentQuestions=[];
+  currentIndex=0;
+  answers={};
+
+  $("call").hidden=true;
+  $("admin").hidden=true;
+  $("home").hidden=false;
+  $("progress").textContent="";
+  $("questionText").textContent="";
+  $("answerArea").innerHTML="";
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
 async function finish(){
   if(finishing) return;
   finishing=true;
@@ -597,13 +724,18 @@ async function finish(){
     ? "⚠️ Kritischer Notfall – Reanimationshinweise beachten"
     : "✓ Abfrage abgeschlossen";
 
-  if(!reaActive){
-    $("answerArea").innerHTML=`
-      <div class="finish-message">
-        <strong>Die Auswertung wurde automatisch abgeschlossen.</strong>
+  $("answerArea").innerHTML=`
+    <div class="finish-message">
+      <strong>${reaActive ? "Die Auswertung ist verfügbar – Reanimationshinweise beachten." : "Die Auswertung wurde automatisch abgeschlossen."}</strong>
+      <div class="finish-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
+        <button type="button" id="pdfBtn">📄 PDF erstellen / öffnen</button>
+        <button type="button" id="homeBtn">🏠 Zur Startseite</button>
       </div>
-    `;
-  }
+    </div>
+  `;
+
+  $("pdfBtn").onclick=openPdfPrint;
+  $("homeBtn").onclick=returnToHome;
 
   setTimeout(()=>{
     document.querySelector(".result-grid")?.scrollIntoView({
