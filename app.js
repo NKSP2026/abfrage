@@ -280,5 +280,12 @@ $("saveSuggestion").onclick=()=>saveSuggestion().catch(e=>alert(e.message));
 $("seedBtn").onclick=()=>seed().catch(e=>alert(e.message));
 
 fillCategories();
+
+// Das Verwaltungsfenster darf niemals automatisch beim Öffnen erscheinen.
+$("loginModal").hidden = true;
+$("admin").hidden = true;
+$("call").hidden = true;
+$("home").hidden = false;
+
 setStatus("● Startbereit");
 initFirebase();

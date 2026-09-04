@@ -49,3 +49,17 @@ Danach die angezeigte GitHub-Pages-Adresse öffnen.
 
 ## Hinweis
 Die enthaltenen medizinischen Fragen und Regeln sind technische Startdaten für die Anwendung. Sie sind kein vollständiger oder verbindlicher Leitstellen-Standard, kein offizieller Notarztindikationskatalog und kein Ersatz für lokal freigegebene Dispositionsrichtlinien. Für reale Notrufdisposition müssen Fragen, Indikationen und Einsatzmittelregeln durch die zuständige fachliche und organisatorische Stelle geprüft und freigegeben werden.
+
+
+## Version 2
+Beim Laden der Seite wird das Verwaltungs-Anmeldefenster ausdrücklich geschlossen. Es öffnet sich nur nach einem Klick auf `🔐 Verwaltung`.
+
+
+## Firebase-Konfiguration bereits eingetragen
+Die Firebase-Web-Konfiguration für das Projekt `abfrage-50be7` wurde bereits in `firebase-config.js` eingetragen.
+
+### Noch erforderlich
+1. Firebase Authentication -> Sign-in method -> Anonymous aktivieren.
+2. Für die Verwaltung E-Mail/Passwort aktivieren.
+3. Einen Administrator-Benutzer erstellen.
+4. Dessen UID in `firebase-config.js` und `database.rules.json` eintragen.
