@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "catalog": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'SrRHH7RgmDRXOCKcHy2mOQANrTk1'"
+    },
+    "notarzt_rules": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'SrRHH7RgmDRXOCKcHy2mOQANrTk1'"
+    },
+    "resource_rules": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'SrRHH7RgmDRXOCKcHy2mOQANrTk1'"
+    },
+    "suggestions": {
+      ".read": true,
+      ".write": "auth != null && auth.uid === 'SrRHH7RgmDRXOCKcHy2mOQANrTk1'"
+    },
+    "call_history": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+  }
+}
