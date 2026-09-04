@@ -92,9 +92,14 @@ async function initFirebase(){
         setStatus(isAdmin() ? "● Firebase verbunden – Verwaltung angemeldet" : "● Firebase verbunden");
       }
     });
-    await loadFirebase();
+    try{
+      await loadFirebase();
+    }catch(e){
+      console.error("Firebase-Daten konnten noch nicht geladen werden:", e);
+      setStatus("⚠️ Firebase verbunden – Datenbankdaten konnten noch nicht geladen werden");
+    }
   }catch(e){
-    console.error(e); setStatus("⚠️ Firebase konnte nicht geladen werden – lokaler Startmodus");
+    console.error(e); setStatus("⚠️ Firebase konnte nicht initialisiert werden – lokaler Startmodus");
   }
 }
 async function loadFirebase(){
@@ -262,9 +267,27 @@ $("doLogin").onclick=async()=>{
   try{
     $("loginError").textContent="";
     if(!auth) throw new Error("Firebase ist noch nicht konfiguriert.");
-    await signInWithEmailAndPassword(auth,$("loginEmail").value.trim(),$("loginPassword").value);
-    if(!isAdmin()) $("loginError").textContent="Dieses Konto ist nicht als Administrator hinterlegt.";
-    else { $("loginModal").hidden=true; $("home").hidden=true; $("admin").hidden=false; }
+    const credential = await signInWithEmailAndPassword(
+      auth,
+      $("loginEmail").value.trim(),
+      $("loginPassword").value
+    );
+
+    // Wichtig: Direkt die UID aus der erfolgreichen Anmeldung prüfen.
+    // onAuthStateChanged läuft asynchron und kann unmittelbar nach dem Login
+    // noch nicht die globale Variable `user` aktualisiert haben.
+    if(credential.user.uid !== ADMIN_UID){
+      $("loginError").textContent = "Dieses Konto ist nicht als Administrator hinterlegt.";
+      return;
+    }
+
+    user = credential.user;
+    $("logoutBtn").hidden = false;
+    $("loginModal").hidden = true;
+    $("home").hidden = true;
+    $("call").hidden = true;
+    $("admin").hidden = false;
+    setStatus("● Firebase verbunden – Verwaltung angemeldet");
   }catch(e){ $("loginError").textContent=e.message; }
 };
 $("logoutBtn").onclick=async()=>{ await signOut(auth); };
