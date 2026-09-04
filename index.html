@@ -13,7 +13,7 @@ h1,h2,h3{margin-top:0}.sub,.muted{color:var(--muted)}main{max-width:1500px;margi
 .card,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}.card{cursor:pointer;min-height:150px;border-left:5px solid var(--accent);transition:.15s}.card:hover{transform:translateY(-2px);background:#202d44}.card b{display:block;font-size:19px;margin:10px 0 6px}.icon{font-size:34px}
 .hidden{display:none!important}.layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(350px,1fr);gap:18px}.question{font-size:26px;line-height:1.3}.help{color:var(--muted);line-height:1.5}
 .answer{display:block;width:100%;padding:15px;margin:9px 0;text-align:left;background:#243149;color:#fff;border:1px solid #4b5e7a;border-radius:9px;font-size:16px;cursor:pointer}.answer:hover{border-color:#67a8ff}
-textarea,input{width:100%;background:#0b1220;border:1px solid #50617b;color:#fff;border-radius:9px;padding:13px;font-size:16px}textarea{min-height:110px}
+textarea,input,select{width:100%;background:#0b1220;border:1px solid #50617b;color:#fff;border-radius:9px;padding:13px;font-size:16px}textarea{min-height:110px}
 button{font:inherit;font-weight:bold;padding:11px 15px;border:0;border-radius:9px;cursor:pointer}.primary{background:var(--accent);color:#fff}.back{background:#46566e;color:#fff}.finish{background:var(--ok);color:#fff}.nav{display:flex;justify-content:space-between;gap:10px;margin-top:24px}
 .progress{height:7px;background:#334155;border-radius:9px;margin:16px 0}.progress>div{height:100%;background:#24b36b;border-radius:9px;transition:.2s}.item{padding:10px 0;border-bottom:1px solid var(--line)}.label{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}
 .box{margin-top:16px;padding:14px;border-radius:10px}.critical{background:#3a171c;border:1px solid #87313a}.recommend{background:#102d22;border:1px solid #236b48}.neutral{background:#132136;border:1px solid #37506e}.tag{display:inline-block;background:#165c3b;padding:7px 10px;border-radius:20px;margin:4px 4px 4px 0}.reason{padding:6px 0}.result{white-space:pre-wrap;line-height:1.55;background:#09101d;padding:18px;border-radius:10px}
@@ -30,6 +30,23 @@ button{font:inherit;font-weight:bold;padding:11px 15px;border:0;border-radius:9p
 <main id="home">
 <h2>Was ist passiert?</h2>
 <div class="grid" id="menu"></div>
+<div style="margin:22px 0 10px"><button class="primary" onclick="openCustom()">⚙️ Eigene Fragen verwalten</button></div>
+<div id="customPanel" class="panel hidden" style="margin-top:14px">
+<h2>⚙️ Eigene Fragen einbauen</h2>
+<p class="help">Eigene Fragen werden dauerhaft im Browser gespeichert und in die gewählte Einsatzart eingebaut. Für jede Antwort kannst du zusätzlich Einsatzmittel und optional eine Notarztbegründung hinterlegen.</p>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+<div><label class="label">Einsatzart</label><select id="cqType"></select></div>
+<div><label class="label">Frage</label><input id="cqQuestion" placeholder="z. B. Ist eine Person eingeschlossen?"></div>
+<div><label class="label">Antwortmöglichkeiten (eine pro Zeile)</label><textarea id="cqAnswers" placeholder="Ja&#10;Nein&#10;Unklar"></textarea></div>
+<div><label class="label">Einsatzmittel bei Antwort 1</label><input id="cqRes1" placeholder="z. B. Feuerwehr – Technische Hilfeleistung"></div>
+<div><label class="label">Einsatzmittel bei Antwort 2</label><input id="cqRes2" placeholder="optional"></div>
+<div><label class="label">Einsatzmittel bei Antwort 3</label><input id="cqRes3" placeholder="optional"></div>
+<div><label class="label">Notarzt bei welcher Antwort?</label><input id="cqNAAnswer" placeholder="Antwort exakt eintragen, z. B. Ja"></div>
+<div><label class="label">Begründung für Notarzt</label><input id="cqNAReason" placeholder="z. B. schwere akute Vitalgefährdung"></div>
+</div>
+<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="finish" onclick="saveCustom()">➕ Eigene Frage speichern</button><button class="back" onclick="closeCustom()">Schließen</button></div>
+<div id="customList" style="margin-top:16px"></div>
+</div>
 <div class="notice"><b>Wichtig:</b> Dieses Programm ist eine selbst erstellte Einsatzunterstützung. Die automatische Notarztentscheidung ist nur so belastbar wie die hinterlegten Regeln und muss vor produktivem Leitstellenbetrieb durch die zuständige Leitstelle bzw. den Ärztlichen Leiter Rettungsdienst gegen die örtlich geltenden Vorgaben und AAO freigegeben werden.</div>
 </main>
 
@@ -42,6 +59,10 @@ button{font:inherit;font-weight:bold;padding:11px 15px;border:0;border-radius:9p
 <div class="progress"><div id="bar"></div></div>
 <div id="questionBox"></div>
 <div class="nav"><button class="back" id="prevBtn" onclick="previous()">← Zurück</button><button class="finish" onclick="finish()">Auswertung →</button></div>
+<div class="box recommend" style="margin-top:18px">
+<h3>🚨 Aktueller Einsatzmittelvorschlag</h3>
+<div id="bottomResources">Noch nicht auswertbar.</div>
+</div>
 </section>
 <aside class="panel">
 <h2>📋 Erfasste Angaben</h2><div id="summary">Noch keine Angaben.</div>
@@ -223,7 +244,7 @@ q('gefahrSonst','Besteht eine unmittelbare Gefahr?',yesno)
 let type=null, idx=0, A={}, started=0;
 
 function start(t){type=t;idx=0;A={};started=Date.now();home.classList.add('hidden');app.classList.remove('hidden');title.textContent=C[t].title;render()}
-function visibleQuestions(){return C[type].questions.filter(x=>!x.when || x.when(A))}
+function visibleQuestions(){return [...C[type].questions,...customQuestionsFor(type)].filter(x=>!x.when || x.when(A))}
 function render(){
  const qs=visibleQuestions(); if(idx>=qs.length)idx=qs.length-1; const x=qs[idx];
  counter.textContent=`Frage ${idx+1} von ${qs.length}`; bar.style.width=`${((idx+1)/qs.length)*100}%`;
@@ -260,6 +281,45 @@ function previous(){if(idx>0){idx--;render()}}
 function goHome(){app.classList.add('hidden');home.classList.remove('hidden');started=0}
 
 function includesAny(v, arr){return arr.includes(v)}
+
+const CUSTOM_KEY='notrufabfrage_custom_questions_v1';
+function getCustom(){try{return JSON.parse(localStorage.getItem(CUSTOM_KEY)||'[]')}catch(e){return[]}}
+function setCustom(v){localStorage.setItem(CUSTOM_KEY,JSON.stringify(v))}
+function customQuestionsFor(t){
+ return getCustom().filter(x=>x.type===t).map(x=>q('custom_'+x.id,x.question,x.answers,'choice',null,'Eigene Frage'));
+}
+function openCustom(){
+ document.getElementById('customPanel').classList.remove('hidden');
+ const s=document.getElementById('cqType');
+ s.innerHTML=menu.map(x=>`<option value="${x.id}">${x.title}</option>`).join('');
+ renderCustomList();
+}
+function closeCustom(){document.getElementById('customPanel').classList.add('hidden')}
+function saveCustom(){
+ const type=document.getElementById('cqType').value;
+ const question=document.getElementById('cqQuestion').value.trim();
+ const answers=document.getElementById('cqAnswers').value.split('\n').map(x=>x.trim()).filter(Boolean);
+ if(!question||answers.length<2){alert('Bitte eine Frage und mindestens zwei Antwortmöglichkeiten eingeben.');return}
+ const resources={};
+ const vals=[document.getElementById('cqRes1').value.trim(),document.getElementById('cqRes2').value.trim(),document.getElementById('cqRes3').value.trim()];
+ answers.forEach((a,i)=>{if(vals[i])resources[a]=vals[i]});
+ const all=getCustom();
+ all.push({id:Date.now().toString(),type,question,answers,resources,naAnswer:document.getElementById('cqNAAnswer').value.trim(),naReason:document.getElementById('cqNAReason').value.trim()});
+ setCustom(all);
+ document.getElementById('cqQuestion').value='';document.getElementById('cqAnswers').value='';
+ document.getElementById('cqRes1').value='';document.getElementById('cqRes2').value='';document.getElementById('cqRes3').value='';
+ document.getElementById('cqNAAnswer').value='';document.getElementById('cqNAReason').value='';
+ renderCustomList();
+ alert('Eigene Frage gespeichert. Sie erscheint bei der nächsten Abfrage dieser Einsatzart.');
+}
+function deleteCustom(id){setCustom(getCustom().filter(x=>x.id!==id));renderCustomList()}
+function renderCustomList(){
+ const type=document.getElementById('cqType').value;
+ const items=getCustom().filter(x=>x.type===type);
+ document.getElementById('customList').innerHTML=items.length?'<h3>Gespeicherte eigene Fragen</h3>'+items.map(x=>`<div class="item"><b>${esc(x.question)}</b><br><span class="muted">${x.answers.map(esc).join(' · ')}</span><br><button class="back" style="margin-top:8px;padding:7px 10px" onclick="deleteCustom('${x.id}')">Löschen</button></div>`).join(''):'<span class="muted">Noch keine eigenen Fragen für diese Einsatzart.</span>';
+ document.getElementById('cqType').onchange=renderCustomList;
+}
+
 function naReasons(){
  const r=[];
  const add=x=>{if(!r.includes(x))r.push(x)};
@@ -325,6 +385,13 @@ function naReasons(){
  if(A.geburtArt==='Pressdrang'||A.kindSichtbar==='Ja'||A.geburtArt==='Kind bereits teilweise sichtbar')add('Notfallbezogene Indikation: unmittelbar einsetzende Geburt');
  if(A.starkeBlutungGeburt==='Ja')add('Schwere Blutung im Zusammenhang mit Geburt');
  if(A.bewGeburt==='Ja'||A.atmGeburt==='Ja')add('Beeinträchtigung der Vitalfunktionen bei Geburtshilfe');
+ // eigene Fragen
+ getCustom().filter(x=>x.type===type).forEach(x=>{
+   const value=A['custom_'+x.id];
+   if(value && x.naAnswer && value===x.naAnswer){
+     add(x.naReason || ('Eigene Regel: Antwort „'+value+'“'));
+   }
+ });
  // general
  if(A.bewSonst==='Ja')add('Bewusstseinsstörung');
  if(A.atmSonst==='Ja')add('Keine normale Atmung oder schwere Atemnot');
@@ -346,6 +413,11 @@ function resources(){
  if(type==='strom'){add('🚒 Feuerwehr','Strom-/Blitzereignis');add('🚑 RTW','Patientenereignis')}
  if(type==='geburt'){add('🚑 RTW','Geburtshilfe')}
  if(type==='sonstiges'){if(A.personenSonst==='Ja'||A.verletzteSonst==='Ja')add('🚑 RTW','Personen betroffen');if(A.gefahrSonst==='Ja')add('🚒 Feuerwehr/Gefahrenabwehr','unmittelbare Gefahr')}
+ // Einsatzmittel aus eigenen Fragen
+ getCustom().filter(x=>x.type===type).forEach(x=>{
+   const value=A['custom_'+x.id];
+   if(value && x.resources && x.resources[value]) add(x.resources[value],'Eigene Frage: '+x.question+' → '+value);
+ });
  const na=naReasons(); if(na.length)add('🚨 NEF / NOTARZT',na.join('; '));
  if(!r.length)add('Weitere fachliche Disposition erforderlich','keine ausreichende automatische Zuordnung');
  return {r,why,na};
@@ -355,7 +427,10 @@ function side(){
  summary.innerHTML=qs.filter(x=>A[x.id]).map(x=>`<div class="item"><span class="label">${esc(x.text)}</span>${esc(A[x.id])}</div>`).join('')||'Noch keine Angaben.';
  const na=naReasons(); critical.innerHTML=na.length?na.map(x=>'• '+esc(x)).join('<br>'):'Keine automatisch erkannte Notarztindikation.';
  const z=resources();
- resourcesEl.innerHTML=z.r.map(x=>`<span class="tag">${esc(x)}</span>`).join('')+(z.na.length?`<div style="margin-top:12px"><b>Begründung für Notarzt:</b><div>${z.na.map(x=>`<div class="reason">• ${esc(x)}</div>`).join('')}</div></div>`:'');
+ const resourceHtml=z.r.map(x=>`<span class="tag">${esc(x)}</span>`).join('')+(z.na.length?`<div style="margin-top:12px"><b>Begründung für Notarzt:</b><div>${z.na.map(x=>`<div class="reason">• ${esc(x)}</div>`).join('')}</div></div>`:'');
+ resourcesEl.innerHTML=resourceHtml;
+ const bottom=document.getElementById('bottomResources');
+ if(bottom) bottom.innerHTML=resourceHtml;
 }
 function finish(){
  const z=resources(), lines=[C[type].title,'','ABFRAGEERGEBNIS',''];
