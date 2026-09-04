@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Einsatzabfrage</title><link rel="stylesheet" href="style.css"></head><body>
+<header><h1>📞 Einsatzabfrage</h1><span id="status">Firebase wird verbunden …</span><button id="login">🔐 Verwaltung</button><button id="logout" hidden>Abmelden</button></header>
+<main>
+<section id="home"><h2>Was ist passiert?</h2><div id="cats" class="grid"></div>
+<section id="admin" hidden><h2>⚙️ Verwaltung</h2>
+<button id="seed">🌱 Grunddaten in Firebase schreiben</button>
+<div class="tabs">
+<button data-tab="q">Neue Frage</button><button data-tab="n">Notarztregel</button><button data-tab="r">Einsatzmittelregel</button><button data-tab="s">Vorschlag</button></div>
+<div id="tab-q" class="tab"><label>Kategorie<select id="qc"></select></label><label>Frage-ID<input id="qid"></label><label>Frage<input id="qt"></label><label>Typ<select id="qtype"><option value="choice">Auswahl</option><option value="text">Freitext</option><option value="number">Zahl</option></select></label><label>Antworten, je Zeile<textarea id="qo"></textarea></label><label>Folgebedingung: Frage-ID<input id="wq"></label><label>Antwort muss sein<input id="wv"></label><label>Reihenfolge<input id="order" type="number" value="100"></label><label>Vorschlagsgruppe<input id="sg"></label><button id="saveq">💾 Frage speichern</button></div>
+<div id="tab-n" class="tab" hidden><label>Regel-ID<input id="nid"></label><label>Kategorie<select id="nc"></select></label><label>Frage-ID<input id="nq"></label><label>Antwortwert<input id="nv"></label><label>Begründung<input id="nr"></label><button id="saven">💾 Notarztregel speichern</button></div>
+<div id="tab-r" class="tab" hidden><label>Regel-ID<input id="rid"></label><label>Kategorie<select id="rc"></select></label><label>Frage-ID<input id="rq"></label><label>Antwortwert<input id="rv"></label><label>Einsatzmittel, je Zeile<textarea id="rr"></textarea></label><button id="saver">💾 Einsatzmittelregel speichern</button></div>
+<div id="tab-s" class="tab" hidden><label>Gruppe<input id="sgrp" placeholder="z. B. vorerkrankungen"></label><label>Vorschlag<input id="stxt"></label><button id="saves">💾 Vorschlag speichern</button></div>
+</section></section>
+
+<section id="call" hidden><button id="back">← Startseite</button><h2 id="title"></h2><div id="question" class="panel"></div><div><button id="prev">← Zurück</button><button id="finish">Auswertung abschließen</button></div>
+<div class="columns"><div class="panel"><h3>📋 Antworten</h3><div id="answers"></div></div><div class="panel red"><h3>⚠️ Notarztindikationen</h3><div id="na"></div></div><div class="panel green"><h3>🚒🚑 Einsatzmittel</h3><div id="res"></div></div></div></section>
+</main>
+<div id="modal" hidden><div class="modal"><h2>Anmelden</h2><input id="email" type="email" placeholder="E-Mail"><input id="pw" type="password" placeholder="Passwort"><button id="dologin">Anmelden</button><button id="cancel">Abbrechen</button><p id="err"></p></div></div>
+<script type="module" src="app.js"></script></body></html>
