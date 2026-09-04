@@ -24,3 +24,9 @@ textarea{min-height:110px;resize:vertical}label{display:block;font-weight:700}.f
 [hidden] {
   display: none !important;
 }
+
+
+.evaluation-card{margin-top:18px}
+#finalSummary,#dispatchText{white-space:pre-wrap;line-height:1.55}
+.dispatch-heading{margin-top:22px;padding-top:18px;border-top:1px solid #303947}
+.status-good{color:#86efac}.status-warn{color:#fcd34d}.status-danger{color:#fca5a5}
