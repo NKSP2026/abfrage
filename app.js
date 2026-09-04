@@ -190,41 +190,64 @@ async function loadFirebase(){
   }
 }
 
+function questionKey(q){
+  const id=String(q?.id||"").trim().toLowerCase();
+  const text=String(q?.text||"").trim().toLowerCase();
+
+  // Bekannte Kernfragen werden unabhängig von alten Firebase-IDs erkannt.
+  if(id==="fuer_wen" || /(?:wen|wer).*betrifft.*(?:notfall|medizin)|(?:sie|dich) selbst.*andere person|mich selbst.*andere person/i.test(text)) return "medizin:fuer_wen";
+  if(id==="geburtsdatum" || /geburts(?:datum|tag)|wann.*geboren/i.test(text)) return "medizin:geburtsdatum";
+  if(id==="geschlecht" || /welches geschlecht|geschlecht.*angegeben/i.test(text)) return "medizin:geschlecht";
+  if(["problem","hauptproblem","beschwerden","beschwerde","symptome"].includes(id) || /haupt(?:problem|beschwer)|was (?:ist|sind).*(?:problem|beschwer)|welche.*beschwer|aktuelle.*beschwer|symptom/i.test(text)) return "medizin:problem";
+  if(id==="bewusstsein" || /bewusstseins|wach und ansprechbar|ansprechbar/i.test(text)) return "medizin:bewusstsein";
+  if(id==="atmung" || /wie ist die atmung|atmet.*normal|atemstillstand/i.test(text)) return "medizin:atmung";
+  if(id==="brustschmerz" || /brustschmerz|schmerzen.*brust/i.test(text)) return "medizin:brustschmerz";
+  if(id==="blutung" || /starke blutung|blutung.*stark/i.test(text)) return "medizin:blutung";
+  if(id==="vorerkrankungen" || /vorerkrank/i.test(text)) return "medizin:vorerkrankungen";
+  if(id==="medikamente" || /medikament.*eingenommen|regelmäßig.*medikament/i.test(text)) return "medizin:medikamente";
+  if(id==="allergien" || /allerg/i.test(text)) return "medizin:allergien";
+
+  // Exakte Doppelungen werden für alle Kategorien entfernt.
+  const normalizedText=text.replace(/[^a-z0-9äöüß]+/g," ").trim();
+  return `${id || "ohne-id"}:${normalizedText}`;
+}
+
 function questionsFor(category){
-  let raw=Object.values(data.catalog?.[category] || {});
+  const raw=Object.values(data.catalog?.[category] || {})
+    .filter(q=>q && q.id && q.text);
 
-  /*
-    In älteren Firebase-Katalogen können noch Fragen wie
-    „Was sind die Beschwerden?“ gespeichert sein. Zusammen mit der neuen
-    Standardfrage „Was ist gerade passiert bzw. was ist das Hauptproblem?“
-    würde dieselbe Information doppelt abgefragt.
+  const seen=new Map();
+  const result=[];
 
-    Bei medizinischen Abfragen behalten wir deshalb nur EINE Frage zur
-    aktuellen Hauptbeschwerde/Hauptproblem. Die aktuelle Standardfrage
-    „problem“ hat dabei Vorrang.
-  */
-  if(category === "medizin"){
-    const mainProblem = q => {
-      const id=String(q?.id||"").toLowerCase();
-      const text=String(q?.text||"").toLowerCase();
-      if(["problem","hauptproblem","beschwerden","beschwerde","symptome","was"].includes(id)) return true;
-      return /(?:haupt(?:problem|beschwer)|was (?:ist|sind).*(?:problem|beschwer)|welche.*beschwer|aktuelle.*beschwer)/i.test(text);
-    };
+  for(const q of raw){
+    const key=questionKey(q);
+    const existingIndex=seen.get(key);
 
-    const candidates=raw.filter(mainProblem);
-    if(candidates.length > 1){
-      const keep=candidates.find(q=>q.id==="problem") || candidates[0];
-      raw=raw.filter(q=>!mainProblem(q) || q===keep);
+    if(existingIndex === undefined){
+      seen.set(key,result.length);
+      result.push(q);
+      continue;
+    }
+
+    // Bei einer doppelten Kernfrage hat die aktuelle Standardfrage Vorrang.
+    const existing=result[existingIndex];
+    const defaultIds=new Set(Object.keys(defaults.catalog?.[category] || {}));
+    const existingIsDefault=defaultIds.has(existing.id);
+    const currentIsDefault=defaultIds.has(q.id);
+
+    if(currentIsDefault && !existingIsDefault){
+      result[existingIndex]=q;
     }
   }
 
-  if(raw.length) return raw.sort((a,b)=>(a.order||999)-(b.order||999));
+  if(result.length){
+    return result.sort((a,b)=>(a.order||999)-(b.order||999));
+  }
 
   return Object.values(defaults.catalog?.[category] || {
     allgemein:{id:"beschreibung",text:"Bitte beschreiben Sie kurz das Ereignis.",type:"text",order:10}
   });
 }
-
 function start(category){
   currentCategory=category;
   currentQuestions=questionsFor(category);
