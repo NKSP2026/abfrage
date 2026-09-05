@@ -22,27 +22,31 @@ const categories = [
 const defaults = {
   catalog: {
     medizin: {
-      fuer_wen:{id:"fuer_wen",text:"Geht es um Sie selbst oder um eine andere Person?",type:"choice",options:["Mich selbst","Eine andere Person"],order:10},
+      fuer_wen:{id:"fuer_wen",text:"Geht es um Sie selbst oder um eine andere Person?",type:"choice",options:["Mich selbst","Eine andere Person","Mehrere Personen / unklar"],order:10},
       geburtsdatum:{id:"geburtsdatum",text:"Wie lautet das Geburtsdatum?",type:"date",order:20},
       geschlecht:{id:"geschlecht",text:"Welches Geschlecht ist angegeben?",type:"choice",options:["Männlich","Weiblich","Divers","Unbekannt"],order:30},
       problem:{id:"problem",text:"Was ist gerade passiert bzw. was ist das Hauptproblem?",type:"text",order:40},
+      erstmal:{id:"erstmal",text:"Treten diese Beschwerden zum ersten Mal auf oder gab es sie schon öfter?",type:"choice",options:["Zum ersten Mal","Schon öfter / bekannt","Unklar"],order:45},
       bewusstsein:{id:"bewusstsein",text:"Ist die Person wach und ansprechbar?",type:"choice",options:["Ja, wach und orientiert","Verwirrt / desorientiert","Somnolent","Soporös","Bewusstlos"],order:50},
       atmung:{id:"atmung",text:"Wie ist die Atmung?",type:"choice",options:["Normal","Dyspnoe / erschwerte Atmung","Keine normale Atmung","Atemstillstand"],order:60},
       brustschmerz:{id:"brustschmerz",text:"Bestehen akute oder starke Brustschmerzen?",type:"choice",options:["Ja","Nein","Unklar"],order:70},
       blutung:{id:"blutung",text:"Besteht eine starke Blutung?",type:"choice",options:["Ja","Nein","Unklar"],order:80},
       vorerkrankungen:{id:"vorerkrankungen",text:"Bestehen relevante Vorerkrankungen?",type:"text",order:90,suggestionGroup:"vorerkrankungen"},
       medikamente:{id:"medikamente",text:"Werden regelmäßig Medikamente eingenommen?",type:"choice",options:["Ja","Nein","Unklar"],order:100},
-      allergien:{id:"allergien",text:"Sind relevante Allergien bekannt?",type:"choice",options:["Ja","Nein","Unklar"],order:110}
+      allergien:{id:"allergien",text:"Sind relevante Allergien bekannt?",type:"choice",options:["Ja","Nein","Unklar"],order:110},
+      schwangerschaft:{id:"schwangerschaft",text:"Besteht eine Schwangerschaft oder ist diese möglich?",type:"choice",options:["Ja","Nein","Unklar"],order:120,whenQuestion:"geschlecht",whenValue:"Weiblich,Divers"}
     },
 
     brand: {
-      feuersichtbar:{id:"feuersichtbar",text:"Ist Feuer sichtbar?",type:"choice",options:["Ja","Nein","Unklar"],order:10},
-      rauch:{id:"rauch",text:"Ist Rauchentwicklung vorhanden?",type:"choice",options:["Stark","Leicht","Nein","Unklar"],order:20},
-      personen:{id:"personen",text:"Sind Personen unmittelbar betroffen oder gefährdet?",type:"choice",options:["Ja","Nein","Unklar"],order:30},
-      verletzte:{id:"verletzte",text:"Gibt es verletzte Personen oder Personen mit möglicher Rauchgasvergiftung?",type:"choice",options:["Ja","Nein","Unklar"],order:40},
-      eingeschlossen:{id:"eingeschlossen",text:"Befinden sich noch Personen im Gefahrenbereich oder Gebäude?",type:"choice",options:["Ja","Nein","Unklar"],order:50},
-      ausbreitung:{id:"ausbreitung",text:"Breitet sich Feuer oder Rauch aus?",type:"choice",options:["Ja","Nein","Unklar"],order:60},
-      objekt:{id:"objekt",text:"Handelt es sich um ein Gebäude, eine Wohnung oder ein anderes Objekt?",type:"choice",options:["Gebäude / Wohnung","Fahrzeug","Freifläche","Sonstiges","Unklar"],order:70}
+      objekt:{id:"objekt",text:"Um was für ein Objekt handelt es sich?",type:"choice",options:["Wohngebäude / Wohnung","Gewerbe / öffentliches Gebäude","Fahrzeug","Freifläche","Sonstiges","Unklar"],order:10},
+      feuersichtbar:{id:"feuersichtbar",text:"Ist Feuer sichtbar?",type:"choice",options:["Ja","Nein","Unklar"],order:20},
+      rauch:{id:"rauch",text:"Ist Rauchentwicklung vorhanden?",type:"choice",options:["Stark","Leicht","Nein","Unklar"],order:30},
+      etage:{id:"etage",text:"Welche Etage ist betroffen?",type:"choice",options:["Keller","Erdgeschoss","1. Obergeschoss","2. Obergeschoss","3. Obergeschoss oder höher","Unklar"],order:40,whenQuestion:"objekt",whenValue:"Wohngebäude / Wohnung"},
+      wohneinheit:{id:"wohneinheit",text:"Welche Wohneinheit ist betroffen?",type:"choice",options:["Links","Rechts","Mitte","Unklar"],order:50,whenQuestion:"objekt",whenValue:"Wohngebäude / Wohnung"},
+      weitere_etagen:{id:"weitere_etagen",text:"Gibt es weitere Etagen über der betroffenen Etage?",type:"choice",options:["Ja","Nein","Unklar"],order:60,whenQuestion:"objekt",whenValue:"Wohngebäude / Wohnung"},
+      personen_im_objekt:{id:"personen_im_objekt",text:"Befinden sich noch Personen im Brandobjekt oder im unmittelbaren Gefahrenbereich?",type:"choice",options:["Ja","Nein","Unklar"],order:70},
+      verletzte:{id:"verletzte",text:"Gibt es bereits gerettete verletzte oder durch Rauch betroffene Personen?",type:"choice",options:["Ja","Nein","Unklar"],order:80,skipWhenQuestion:"personen_im_objekt",skipWhenValue:"Ja"},
+      ausbreitung:{id:"ausbreitung",text:"Breitet sich Feuer oder Rauch weiter aus?",type:"choice",options:["Ja","Nein","Unklar"],order:90}
     },
 
     vu: {
@@ -73,15 +77,17 @@ const defaults = {
     dyspnoe:{category:"medizin",questionId:"atmung",value:"Dyspnoe / erschwerte Atmung",reason:"Schwere Atemnot / erschwerte Atmung"},
     brustschmerz:{category:"medizin",questionId:"brustschmerz",value:"Ja",reason:"Akuter Brustschmerz"},
     starke_blutung:{category:"medizin",questionId:"blutung",value:"Ja",reason:"Starke Blutung"},
-    brand_rauchen:{category:"brand",questionId:"verletzte",value:"Ja",reason:"Verletzte bzw. mögliche Rauchgasvergiftung"}
+    brand_personen_im_objekt:{category:"brand",questionId:"personen_im_objekt",value:"Ja",reason:"Personen im Brandobjekt – besondere Gefährdung / medizinische Versorgung erforderlich"},
+    brand_rauchen:{category:"brand",questionId:"verletzte",value:"Ja",reason:"Verletzte bzw. mögliche Rauchgasbelastung"},
+    vu_eingeklemmt:{category:"vu",questionId:"eingeklemmt",value:"Ja",reason:"Eingeklemmte Person"}
   },
 
   resource_rules: {
     med_rtw:{category:"medizin",questionId:"bewusstsein",value:"*",resources:["RTW"]},
     brand_feuer:{category:"brand",questionId:"feuersichtbar",value:"Ja",resources:["Feuerwehr"]},
-    brand_rauchen:{category:"brand",questionId:"verletzte",value:"Ja",resources:["Rettungsdienst","NEF / Notarzt"]},
-    brand_eingeschlossen:{category:"brand",questionId:"eingeschlossen",value:"Ja",resources:["Feuerwehr","Rettungsdienst"]},
-    vu_eingeklemmt:{category:"vu",questionId:"eingeklemmt",value:"Ja",resources:["Feuerwehr / technische Rettung","Rettungsdienst","NEF / Notarzt"]},
+    brand_personen_im_objekt:{category:"brand",questionId:"personen_im_objekt",value:"Ja",resources:["Feuerwehr","Rettungsdienst","NEF / Notarzt – nach örtlicher Disposition"]},
+    brand_rauchen:{category:"brand",questionId:"verletzte",value:"Ja",resources:["Rettungsdienst","NEF / Notarzt – nach örtlicher Disposition"]},
+    vu_eingeklemmt:{category:"vu",questionId:"eingeklemmt",value:"Ja",resources:["Feuerwehr / technische Rettung","Rettungsdienst","NEF / Notarzt – nach örtlicher Disposition"]},
     vu_verletzt:{category:"vu",questionId:"beteiligte",value:"Ja",resources:["Rettungsdienst"]},
     abc_austritt:{category:"abc",questionId:"austritt",value:"Ja",resources:["Feuerwehr / ABC-Gefahrgut-Komponente"]}
   },
@@ -184,6 +190,16 @@ async function loadFirebase(){
     const snap=await get(ref(db,p));
     if(snap.exists()){
       data[p]=mergeData(defaults[p], snap.val());
+      // Die aktuellen Standardfragen haben Vorrang vor alten Firebase-Versionen.
+      // Zusätzliche, wirklich neue Verwaltungsfragen bleiben trotzdem erhalten.
+      if(p==="catalog"){
+        for(const [cat, standardQuestions] of Object.entries(defaults.catalog||{})){
+          data.catalog[cat] ||= {};
+          for(const [id, q] of Object.entries(standardQuestions)){
+            data.catalog[cat][id]=structuredClone(q);
+          }
+        }
+      }
     }else{
       data[p]=structuredClone(defaults[p]);
     }
@@ -206,6 +222,15 @@ function questionKey(q){
   if(id==="vorerkrankungen" || /vorerkrank/i.test(text)) return "medizin:vorerkrankungen";
   if(id==="medikamente" || /medikament.*eingenommen|regelmäßig.*medikament/i.test(text)) return "medizin:medikamente";
   if(id==="allergien" || /allerg/i.test(text)) return "medizin:allergien";
+  if(id==="schwangerschaft" || /schwanger/i.test(text)) return "medizin:schwangerschaft";
+  if(id==="erstmal" || /erste.?mal|schon öfter|öfter.*beschwer|beschwer.*wieder/i.test(text)) return "medizin:erstmal";
+
+  if(id==="objekt" || /welch.*objekt|handelt.*gebäude|gebäude.*wohnung/i.test(text)) return "brand:objekt";
+  if(id==="etage" || /welche etage|betroffene etage/i.test(text)) return "brand:etage";
+  if(id==="wohneinheit" || /wohneinheit|links.*rechts.*mitte/i.test(text)) return "brand:wohneinheit";
+  if(id==="weitere_etagen" || /weitere etagen.*über|etagen.*über.*betroffen/i.test(text)) return "brand:weitere_etagen";
+  if(id==="personen_im_objekt" || /personen.*(?:brandobjekt|gebäude|gefahrenbereich)|noch.*personen.*(?:objekt|gebäude)/i.test(text)) return "brand:personen_im_objekt";
+  if(id==="verletzte" || /verletzte.*rauch|rauchgas|durch rauch betroffene/i.test(text)) return "brand:verletzte";
 
   // Exakte Doppelungen werden für alle Kategorien entfernt.
   const normalizedText=text.replace(/[^a-z0-9äöüß]+/g," ").trim();
@@ -269,11 +294,32 @@ function start(category){
   evaluate();
 }
 
+function valueMatches(actual, expected){
+  const values=String(expected ?? "").split(",").map(x=>x.trim()).filter(Boolean);
+  return values.length ? values.includes(String(actual ?? "")) : true;
+}
+
+function shouldSkipQuestion(q){
+  if(q.whenQuestion && !valueMatches(answers[q.whenQuestion], q.whenValue)) return true;
+  if(q.skipWhenQuestion && valueMatches(answers[q.skipWhenQuestion], q.skipWhenValue)) return true;
+
+  // Medizinische Logik: bei männlich wird Schwangerschaft nicht abgefragt.
+  if(q.id==="schwangerschaft" && answers.geschlecht==="Männlich") return true;
+
+  // Brand: Wenn Personen noch im Brandobjekt sind, ist die Gefahr/Rauchbelastung bereits impliziert.
+  if(currentCategory==="brand" && answers.personen_im_objekt==="Ja" &&
+     ["verletzte","rauchgasvergiftung","rauchgas"].includes(String(q.id||"").toLowerCase())) return true;
+
+  // Allgemeine semantische Doppelungen: bereits beantwortete gleiche Kernfrage nicht erneut fragen.
+  const key=questionKey(q);
+  const already=currentQuestions.find(x=>x!==q && questionKey(x)===key && answers[x.id]!==undefined && answers[x.id]!=="");
+  if(already) return true;
+
+  return false;
+}
+
 function visibleQuestions(){
-  return currentQuestions.filter(q=>{
-    if(!q.whenQuestion) return true;
-    return answers[q.whenQuestion] === q.whenValue;
-  });
+  return currentQuestions.filter(q=>!shouldSkipQuestion(q));
 }
 
 function isReaCondition(){
@@ -431,26 +477,26 @@ function advanceOrFinish(){
 
 function showReaGuide(){
   if(reaActive) return;
-
   reaActive=true;
 
   $("progress").textContent="KRITISCHER NOTFALL";
   $("questionText").textContent="⚠️ Reanimation sofort beginnen";
   $("answerArea").innerHTML=`
     <div id="reaGuide" class="rea-guide">
-      <h3>🫀 Keine normale Atmung</h3>
-      <p><strong>1.</strong> Sofort Notruf / Rettungsdienst veranlassen, falls noch nicht geschehen.</p>
-      <p><strong>2.</strong> Person auf eine feste Unterlage legen.</p>
-      <p><strong>3.</strong> Mit Herzdruckmassage beginnen: Mitte des Brustkorbs, kräftig und zügig drücken.</p>
-      <p><strong>4.</strong> Wenn ein AED verfügbar ist: AED holen lassen und den Anweisungen des Geräts folgen.</p>
-      <p class="rea-hint">Die weitere Abfrage wird in diesem kritischen Zustand unterbrochen.</p>
+      <h3>🫀 PRÜFEN – RUFEN – DRÜCKEN</h3>
+      <p><strong>1. Telefon auf Lautsprecher:</strong> Lassen Sie die Verbindung offen und folgen Sie zusätzlich den Anweisungen der Leitstelle.</p>
+      <p><strong>2. Kurz prüfen:</strong> Reagiert die Person nicht und atmet sie nicht oder nicht normal, sofort handeln. Einen Pulstastversuch sollte nur durchführen, wer darin geschult ist – dadurch darf die Herzdruckmassage nicht verzögert werden.</p>
+      <p><strong>3. Position:</strong> Person auf den Rücken auf eine möglichst feste Unterlage legen.</p>
+      <p><strong>4. Hände:</strong> Einen Handballen in die Mitte des Brustkorbs auf das Brustbein legen, zweite Hand darüber. Arme möglichst gerade, Schultern über den Händen.</p>
+      <p><strong>5. Drücken:</strong> Bei Erwachsenen etwa <strong>5–6 cm</strong> tief und <strong>100–120-mal pro Minute</strong>. Nach jedem Druck den Brustkorb vollständig entlasten.</p>
+      <p><strong>6. AED:</strong> Wenn ein AED verfügbar ist, holen lassen und den Geräteanweisungen folgen. Die Herzdruckmassage nur so kurz wie nötig unterbrechen.</p>
+      <p class="rea-hint">Diese Anleitung ersetzt nicht die Anleitung der Notrufleitstelle. Bei einem echten Notfall immer 112 und den Disponenten folgen.</p>
       <button type="button" id="reaFinishBtn">Auswertung / Einsatzmittel anzeigen</button>
     </div>
   `;
 
   $("previousBtn").disabled=false;
   $("finishBtn").style.display="none";
-
   $("reaFinishBtn").onclick=()=>finish();
   evaluate();
 }
@@ -586,6 +632,9 @@ function renderFinalTexts(reasons=[], resources=[]){
   if(resources.length) dispatch += ` | Mittel: ${resources.join(", ")}`;
   if(reasons.length) dispatch += " | NEF/NA";
 
+  if(!reaActive){
+    dispatch += " | Bei Verschlechterung sofort erneut 112 verständigen.";
+  }
   $("dispatchText").textContent=dispatch;
 }
 
@@ -750,6 +799,7 @@ async function finish(){
   $("answerArea").innerHTML=`
     <div class="finish-message">
       <strong>${reaActive ? "Die Auswertung ist verfügbar – Reanimationshinweise beachten." : "Die Auswertung wurde automatisch abgeschlossen."}</strong>
+      ${reaActive ? "" : "<p style=\"margin-top:12px;\">Wenn sich die Situation oder der Zustand verschlechtert, sofort erneut die <strong>112</strong> verständigen.</p>"}
       <div class="finish-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;">
         <button type="button" id="pdfBtn">📄 PDF erstellen / öffnen</button>
         <button type="button" id="homeBtn">🏠 Zur Startseite</button>
